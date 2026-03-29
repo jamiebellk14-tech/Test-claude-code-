@@ -78,13 +78,17 @@ struct ActiveTimerView: View {
                             .font(.headline)
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
-                            .padding(.top, buttonPaddingTop)
-                            .padding(.bottom, buttonPaddingBottom)
                     }
                     .listRowBackground(
                         RoundedRectangle(cornerRadius: buttonCornerRadius)
                             .fill(Color.red)
                     )
+                    .listRowInsets(EdgeInsets(
+                        top: buttonPaddingTop,
+                        leading: 0,
+                        bottom: buttonPaddingBottom,
+                        trailing: 0
+                    ))
                 }
             }
             .navigationTitle("Timer Running")

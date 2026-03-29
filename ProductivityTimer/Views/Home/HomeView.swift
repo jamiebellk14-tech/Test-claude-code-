@@ -60,13 +60,17 @@ struct HomeView: View {
                             .font(.headline)
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
-                            .padding(.top, buttonPaddingTop)
-                            .padding(.bottom, buttonPaddingBottom)
                     }
                     .listRowBackground(
                         RoundedRectangle(cornerRadius: buttonCornerRadius)
                             .fill(Color(hex: "#00bf63"))
                     )
+                    .listRowInsets(EdgeInsets(
+                        top: buttonPaddingTop,
+                        leading: 0,
+                        bottom: buttonPaddingBottom,
+                        trailing: 0
+                    ))
                 }
             }
             .scrollDismissesKeyboard(.immediately)

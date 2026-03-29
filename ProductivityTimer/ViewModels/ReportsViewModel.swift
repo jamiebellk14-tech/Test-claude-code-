@@ -7,6 +7,14 @@ enum CompletionFilter: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+enum TimePeriodFilter: String, CaseIterable, Identifiable {
+    case today     = "Today"
+    case thisWeek  = "Week"
+    case thisMonth = "Month"
+    case allTime   = "All Time"
+    var id: String { rawValue }
+}
+
 struct TagStat: Identifiable {
     let id: UUID
     let name: String
@@ -22,10 +30,26 @@ struct TagStat: Identifiable {
 final class ReportsViewModel {
     var filterTag: Tag? = nil
     var filterStatus: CompletionFilter = .all
+    var filterPeriod: TimePeriodFilter = .allTime
 
     func filtered(_ tasks: [TaskEntry]) -> [TaskEntry] {
-        tasks
+        let calendar = Calendar.current
+        let now = Date()
+
+        return tasks
             .filter { $0.endTime != nil }  // completed only
+            .filter { task in
+                switch filterPeriod {
+                case .allTime:
+                    return true
+                case .today:
+                    return calendar.isDateInToday(task.startTime)
+                case .thisWeek:
+                    return calendar.isDate(task.startTime, equalTo: now, toGranularity: .weekOfYear)
+                case .thisMonth:
+                    return calendar.isDate(task.startTime, equalTo: now, toGranularity: .month)
+                }
+            }
             .filter { task in
                 guard let tag = filterTag else { return true }
                 return task.tag?.id == tag.id

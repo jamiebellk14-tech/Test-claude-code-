@@ -7,6 +7,7 @@ struct ReportsView: View {
 
     @State private var reportsVM = ReportsViewModel()
     @State private var showChart = false
+    @State private var expandedGroups: Set<String> = []
 
     var body: some View {
         NavigationStack {
@@ -31,10 +32,13 @@ struct ReportsView: View {
                     }
                 }
 
+                // Overtime by tag
+                overtimeByTagSection
+
                 // Filter controls
                 filterSection
 
-                // Grouped task list
+                // Grouped task list (collapsible)
                 let grouped = reportsVM.grouped(allTasks)
                 if grouped.isEmpty {
                     Section {
@@ -44,9 +48,28 @@ struct ReportsView: View {
                     }
                 } else {
                     ForEach(grouped, id: \.key) { group in
-                        Section(group.key) {
-                            ForEach(group.tasks) { task in
-                                TaskRowView(task: task)
+                        Section {
+                            DisclosureGroup(
+                                isExpanded: Binding(
+                                    get: { expandedGroups.contains(group.key) },
+                                    set: { isOpen in
+                                        if isOpen { expandedGroups.insert(group.key) }
+                                        else { expandedGroups.remove(group.key) }
+                                    }
+                                )
+                            ) {
+                                ForEach(group.tasks) { task in
+                                    TaskRowView(task: task)
+                                }
+                            } label: {
+                                HStack {
+                                    Text(group.key)
+                                        .font(.headline)
+                                    Spacer()
+                                    Text("\(group.tasks.count) task\(group.tasks.count == 1 ? "" : "s")")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                         }
                     }
@@ -96,10 +119,47 @@ struct ReportsView: View {
         .padding(.vertical, 8)
     }
 
+    // MARK: - Overtime by tag
+
+    private var overtimeByTagSection: some View {
+        let stats = reportsVM.tagStats(from: reportsVM.filtered(allTasks))
+            .filter { $0.totalOvertime > 0 }
+        return Group {
+            if !stats.isEmpty {
+                Section("Overtime by Tag") {
+                    ForEach(stats) { stat in
+                        HStack {
+                            Circle()
+                                .fill(Color(hex: stat.colorHex))
+                                .frame(width: 10, height: 10)
+                            Text(stat.name)
+                            Spacer()
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text(stat.totalOvertime.hhmmss)
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(.orange)
+                                Text("avg \(stat.averageOvertime.hhmmss)")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: - Filter controls
 
     private var filterSection: some View {
         Section("Filter") {
+            Picker("Period", selection: $reportsVM.filterPeriod) {
+                ForEach(TimePeriodFilter.allCases) { p in
+                    Text(p.rawValue).tag(p)
+                }
+            }
+            .pickerStyle(.segmented)
+
             Picker("Status", selection: $reportsVM.filterStatus) {
                 ForEach(CompletionFilter.allCases) { f in
                     Text(f.rawValue).tag(f)

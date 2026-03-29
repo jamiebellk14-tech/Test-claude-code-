@@ -5,7 +5,6 @@ struct ActiveTimerView: View {
     let timerViewModel: TimerViewModel
 
     @Environment(\.modelContext) private var context
-    @State private var showEndConfirmation = false
 
     private var task: TaskEntry? { timerViewModel.currentTask }
 
@@ -62,8 +61,8 @@ struct ActiveTimerView: View {
                 Spacer()
 
                 // End button
-                Button(role: .destructive) {
-                    showEndConfirmation = true
+                Button {
+                    timerViewModel.endTask(context: context)
                 } label: {
                     Label("End Task", systemImage: "stop.fill")
                         .font(.headline)
@@ -78,12 +77,6 @@ struct ActiveTimerView: View {
             }
             .navigationTitle("Timer Running")
             .navigationBarTitleDisplayMode(.inline)
-            .confirmationDialog("End this task?", isPresented: $showEndConfirmation) {
-                Button("End Task", role: .destructive) {
-                    timerViewModel.endTask(context: context)
-                }
-                Button("Keep Going", role: .cancel) {}
-            }
         }
     }
 }

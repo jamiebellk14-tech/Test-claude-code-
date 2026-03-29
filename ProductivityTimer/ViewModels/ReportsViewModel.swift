@@ -95,6 +95,18 @@ final class ReportsViewModel {
         }.sorted { $0.name < $1.name }
     }
 
+    // MARK: - Time drains (overtime tasks for selected period, with notes)
+
+    func timeDrains(_ tasks: [TaskEntry]) -> [TaskEntry] {
+        byPeriod(tasks)
+            .filter { $0.isOverTime }
+            .sorted {
+                let a = ($0.actualDuration ?? 0) - $0.estimatedDuration
+                let b = ($1.actualDuration ?? 0) - $1.estimatedDuration
+                return a > b
+            }
+    }
+
     // MARK: - Task list (tag filter only, always stable)
 
     func grouped(_ tasks: [TaskEntry]) -> [(key: String, tasks: [TaskEntry])] {

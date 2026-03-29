@@ -15,6 +15,9 @@ struct ReportsView: View {
                 // Insights: period + status pickers + snapshot card
                 insightsSection
 
+                // What took longer — overtime tasks with check-in notes
+                timeDrainsSection
+
                 // Overtime by tag (responds to period filter)
                 overtimeByTagSection
 
@@ -174,6 +177,61 @@ struct ReportsView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 6)
+    }
+
+    // MARK: - Time drains
+
+    private var timeDrainsSection: some View {
+        let drains = reportsVM.timeDrains(allTasks)
+        return Group {
+            if !drains.isEmpty {
+                Section {
+                    ForEach(drains) { task in
+                        let overtime = (task.actualDuration ?? 0) - task.estimatedDuration
+                        let notes = task.updates.sorted { $0.createdAt < $1.createdAt }
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack(alignment: .center) {
+                                if let hex = task.tag?.colorHex {
+                                    Circle()
+                                        .fill(Color(hex: hex))
+                                        .frame(width: 9, height: 9)
+                                }
+                                Text(task.label)
+                                    .font(.subheadline.weight(.medium))
+                                Spacer()
+                                Text("+\(overtime.hhmmss)")
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(.orange)
+                            }
+                            if notes.isEmpty {
+                                Text("No check-in note left")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                                    .italic()
+                            } else {
+                                ForEach(notes) { update in
+                                    HStack(alignment: .top, spacing: 6) {
+                                        Rectangle()
+                                            .fill(Color.orange.opacity(0.5))
+                                            .frame(width: 2)
+                                            .cornerRadius(1)
+                                        Text(update.note)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                } header: {
+                    HStack {
+                        Image(systemName: "clock.badge.exclamationmark")
+                        Text("What took longer")
+                    }
+                }
+            }
+        }
     }
 
     // MARK: - Overtime by tag

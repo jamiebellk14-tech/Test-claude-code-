@@ -14,56 +14,52 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                Form {
-                    Section("What are you working on?") {
-                        TextField("e.g. Doing the dishes", text: $taskLabel)
-                    }
+            Form {
+                Section("What are you working on?") {
+                    TextField("e.g. Doing the dishes", text: $taskLabel)
+                }
 
-                    Section("How long do you think it'll take?") {
-                        DurationPickerView(duration: $estimatedDuration)
-                    }
+                Section("How long do you think it'll take?") {
+                    DurationPickerView(duration: $estimatedDuration)
+                }
 
-                    Section("Tag") {
-                        Picker("Tag", selection: $selectedTag) {
-                            Text("None").tag(Optional<Tag>.none)
-                            ForEach(tags) { tag in
-                                HStack {
-                                    Circle()
-                                        .fill(Color(hex: tag.colorHex))
-                                        .frame(width: 10, height: 10)
-                                    Text(tag.name)
-                                }
-                                .tag(Optional(tag))
+                Section("Tag") {
+                    Picker("Tag", selection: $selectedTag) {
+                        Text("None").tag(Optional<Tag>.none)
+                        ForEach(tags) { tag in
+                            HStack {
+                                Circle()
+                                    .fill(Color(hex: tag.colorHex))
+                                    .frame(width: 10, height: 10)
+                                Text(tag.name)
                             }
-                        }
-                    }
-
-                    if showValidationError {
-                        Section {
-                            Text("Please enter a task name and set a duration greater than 0.")
-                                .foregroundStyle(.red)
-                                .font(.caption)
+                            .tag(Optional(tag))
                         }
                     }
                 }
-                .scrollDismissesKeyboard(.immediately)
 
-                Button {
-                    startTask()
-                } label: {
-                    Text("Begin Task")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color(hex: "#00bf63"))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                if showValidationError {
+                    Section {
+                        Text("Please enter a task name and set a duration greater than 0.")
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                    }
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 12)
+
+                Section {
+                    Button {
+                        startTask()
+                    } label: {
+                        Text("Begin Task")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                    }
+                    .listRowBackground(Color(hex: "#00bf63"))
+                }
             }
-            .background(Color(.systemGroupedBackground))
+            .scrollDismissesKeyboard(.immediately)
             .navigationTitle("New Task")
             .task {
                 await NotificationManager.shared.requestAuthorization()

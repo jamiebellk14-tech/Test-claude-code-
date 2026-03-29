@@ -6,6 +6,13 @@ struct ActiveTimerView: View {
 
     @Environment(\.modelContext) private var context
 
+    // ── Tweak these to adjust the End Task button ──
+    private let buttonCornerRadius: CGFloat = 8
+    private let buttonPaddingTop:   CGFloat = 12
+    private let buttonPaddingBottom: CGFloat = 12
+    private let buttonHorizontalPadding: CGFloat = 24
+    // ──────────────────────────────────────────────
+
     private var task: TaskEntry? { timerViewModel.currentTask }
 
     var body: some View {
@@ -66,13 +73,14 @@ struct ActiveTimerView: View {
                 } label: {
                     Label("End Task", systemImage: "stop.fill")
                         .font(.headline)
+                        .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.red.opacity(0.1))
-                        .foregroundStyle(.red)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .padding(.top, buttonPaddingTop)
+                        .padding(.bottom, buttonPaddingBottom)
+                        .background(Color.red)
+                        .clipShape(RoundedRectangle(cornerRadius: buttonCornerRadius))
                 }
-                .padding(.horizontal, 32)
+                .padding(.horizontal, buttonHorizontalPadding)
                 .padding(.bottom, 32)
             }
             .navigationTitle("Timer Running")

@@ -12,6 +12,12 @@ struct HomeView: View {
     @State private var selectedTag: Tag? = nil
     @State private var showValidationError = false
 
+    // ── Tweak these to adjust the Begin Task button ──
+    private let buttonCornerRadius: CGFloat  = 8
+    private let buttonPaddingTop:    CGFloat = 12
+    private let buttonPaddingBottom: CGFloat = 12
+    // ─────────────────────────────────────────────────
+
     var body: some View {
         NavigationStack {
             Form {
@@ -54,9 +60,13 @@ struct HomeView: View {
                             .font(.headline)
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
+                            .padding(.top, buttonPaddingTop)
+                            .padding(.bottom, buttonPaddingBottom)
                     }
-                    .listRowBackground(Color(hex: "#00bf63"))
+                    .listRowBackground(
+                        RoundedRectangle(cornerRadius: buttonCornerRadius)
+                            .fill(Color(hex: "#00bf63"))
+                    )
                 }
             }
             .scrollDismissesKeyboard(.immediately)

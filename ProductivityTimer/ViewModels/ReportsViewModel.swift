@@ -47,7 +47,7 @@ final class ReportsViewModel {
             let key = task.tag?.name ?? "Untagged"
             dict[key, default: []].append(task)
         }
-        return dict.sorted { $0.key < $1.key }
+        return dict.sorted { $0.key < $1.key }.map { (key: $0.key, tasks: $0.value) }
     }
 
     func totalOvertime(_ tasks: [TaskEntry]) -> TimeInterval {

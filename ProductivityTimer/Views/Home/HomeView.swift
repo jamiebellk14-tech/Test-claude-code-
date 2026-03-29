@@ -14,41 +14,41 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("What are you working on?") {
-                    TextField("e.g. Doing the dishes", text: $taskLabel)
-                }
+            VStack(spacing: 0) {
+                Form {
+                    Section("What are you working on?") {
+                        TextField("e.g. Doing the dishes", text: $taskLabel)
+                    }
 
-                Section("How long do you think it'll take?") {
-                    DurationPickerView(duration: $estimatedDuration)
-                }
+                    Section("How long do you think it'll take?") {
+                        DurationPickerView(duration: $estimatedDuration)
+                    }
 
-                Section("Tag") {
-                    Picker("Tag", selection: $selectedTag) {
-                        Text("None").tag(Optional<Tag>.none)
-                        ForEach(tags) { tag in
-                            HStack {
-                                Circle()
-                                    .fill(Color(hex: tag.colorHex))
-                                    .frame(width: 10, height: 10)
-                                Text(tag.name)
+                    Section("Tag") {
+                        Picker("Tag", selection: $selectedTag) {
+                            Text("None").tag(Optional<Tag>.none)
+                            ForEach(tags) { tag in
+                                HStack {
+                                    Circle()
+                                        .fill(Color(hex: tag.colorHex))
+                                        .frame(width: 10, height: 10)
+                                    Text(tag.name)
+                                }
+                                .tag(Optional(tag))
                             }
-                            .tag(Optional(tag))
+                        }
+                    }
+
+                    if showValidationError {
+                        Section {
+                            Text("Please enter a task name and set a duration greater than 0.")
+                                .foregroundStyle(.red)
+                                .font(.caption)
                         }
                     }
                 }
+                .scrollDismissesKeyboard(.immediately)
 
-                if showValidationError {
-                    Section {
-                        Text("Please enter a task name and set a duration greater than 0.")
-                            .foregroundStyle(.red)
-                            .font(.caption)
-                    }
-                }
-            }
-            .scrollDismissesKeyboard(.immediately)
-            .navigationTitle("New Task")
-            .safeAreaInset(edge: .bottom) {
                 Button {
                     startTask()
                 } label: {
@@ -61,8 +61,9 @@ struct HomeView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 8)
+                .padding(.vertical, 12)
             }
+            .navigationTitle("New Task")
             .task {
                 await NotificationManager.shared.requestAuthorization()
             }

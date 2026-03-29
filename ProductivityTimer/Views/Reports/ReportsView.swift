@@ -12,8 +12,11 @@ struct ReportsView: View {
     var body: some View {
         NavigationStack {
             List {
-                // Summary stats
-                statsSection
+                // Insights: period + status pickers + snapshot card
+                insightsSection
+
+                // Overtime by tag (responds to period filter)
+                overtimeByTagSection
 
                 // Bar chart toggle
                 if !allTasks.isEmpty {
@@ -32,17 +35,23 @@ struct ReportsView: View {
                     }
                 }
 
-                // Overtime by tag
-                overtimeByTagSection
+                // Tag filter for the list
+                Section {
+                    Picker("Tag", selection: $reportsVM.filterTag) {
+                        Text("All tags").tag(Optional<Tag>.none)
+                        ForEach(tags) { tag in
+                            Text(tag.name).tag(Optional(tag))
+                        }
+                    }
+                } header: {
+                    Text("Browse by Tag")
+                }
 
-                // Filter controls
-                filterSection
-
-                // Grouped task list (collapsible)
+                // Grouped task list — only filtered by tag, never jumps
                 let grouped = reportsVM.grouped(allTasks)
                 if grouped.isEmpty {
                     Section {
-                        Text("No completed tasks match your filters.")
+                        Text("No completed tasks.")
                             .foregroundStyle(.secondary)
                             .font(.subheadline)
                     }
@@ -63,8 +72,7 @@ struct ReportsView: View {
                                 }
                             } label: {
                                 HStack {
-                                    Text(group.key)
-                                        .font(.headline)
+                                    Text(group.key).font(.headline)
                                     Spacer()
                                     Text("\(group.tasks.count) task\(group.tasks.count == 1 ? "" : "s")")
                                         .font(.caption)
@@ -79,51 +87,99 @@ struct ReportsView: View {
         }
     }
 
-    // MARK: - Stats header
+    // MARK: - Insights section
 
-    private var statsSection: some View {
-        Section("Summary") {
-            let completed = allTasks.filter { $0.endTime != nil }
-            let total = reportsVM.totalOvertime(allTasks)
-            let onTime = completed.filter { $0.completedOnTime }.count
-            let overTime = completed.filter { $0.isOverTime }.count
-
-            HStack(spacing: 0) {
-                statCell(value: "\(completed.count)", label: "Total Tasks")
-                Divider()
-                statCell(value: "\(onTime)", label: "On Time", color: .green)
-                Divider()
-                statCell(value: "\(overTime)", label: "Over Time", color: .orange)
+    private var insightsSection: some View {
+        Section {
+            // Period picker
+            Picker("Period", selection: $reportsVM.filterPeriod) {
+                ForEach(TimePeriodFilter.allCases) { p in
+                    Text(p.rawValue).tag(p)
+                }
             }
-            .frame(maxWidth: .infinity)
+            .pickerStyle(.segmented)
 
-            HStack {
-                Image(systemName: "clock.badge.exclamationmark")
-                    .foregroundStyle(.orange)
-                Text("Total overtime: ")
+            // Status picker
+            Picker("Status", selection: $reportsVM.filterStatus) {
+                ForEach(CompletionFilter.allCases) { f in
+                    Text(f.rawValue).tag(f)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            // Snapshot card
+            let snap = reportsVM.snapshot(allTasks)
+            if snap.total == 0 {
+                Text("No tasks for this period.")
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
-                Text(total > 0 ? total.hhmmss : "None")
-                    .bold()
-                    .foregroundStyle(total > 0 ? .orange : .green)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 8)
+            } else {
+                VStack(spacing: 12) {
+                    // Stat row
+                    HStack(spacing: 0) {
+                        snapshotCell(value: "\(snap.total)", label: "Tasks")
+                        Divider()
+                        snapshotCell(value: "\(snap.onTime)", label: "On Time", color: .green)
+                        Divider()
+                        snapshotCell(value: "\(snap.overTime)", label: "Over Time", color: .orange)
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    // On-time ratio bar
+                    if snap.total > 0 {
+                        VStack(spacing: 4) {
+                            GeometryReader { geo in
+                                ZStack(alignment: .leading) {
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color.orange.opacity(0.25))
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color.green)
+                                        .frame(width: geo.size.width * snap.onTimePercent)
+                                }
+                            }
+                            .frame(height: 8)
+
+                            HStack {
+                                Circle().fill(Color.green).frame(width: 8, height: 8)
+                                Text("\(Int(snap.onTimePercent * 100))% on time")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                if snap.totalOvertimeDuration > 0 {
+                                    Image(systemName: "clock.badge.exclamationmark")
+                                        .font(.caption2)
+                                        .foregroundStyle(.orange)
+                                    Text(snap.totalOvertimeDuration.hhmmss)
+                                        .font(.caption2.bold())
+                                        .foregroundStyle(.orange)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 2)
+                    }
+                }
+                .padding(.vertical, 6)
             }
-            .font(.subheadline)
+        } header: {
+            Text("Insights")
         }
     }
 
-    private func statCell(value: String, label: String, color: Color = .primary) -> some View {
+    private func snapshotCell(value: String, label: String, color: Color = .primary) -> some View {
         VStack(spacing: 2) {
             Text(value).font(.title2.bold()).foregroundStyle(color)
             Text(label).font(.caption2).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
     }
 
     // MARK: - Overtime by tag
 
     private var overtimeByTagSection: some View {
-        let stats = reportsVM.tagStats(from: reportsVM.filtered(allTasks))
-            .filter { $0.totalOvertime > 0 }
+        let stats = reportsVM.tagStats(from: allTasks).filter { $0.totalOvertime > 0 }
         return Group {
             if !stats.isEmpty {
                 Section("Overtime by Tag") {
@@ -144,33 +200,6 @@ struct ReportsView: View {
                             }
                         }
                     }
-                }
-            }
-        }
-    }
-
-    // MARK: - Filter controls
-
-    private var filterSection: some View {
-        Section("Filter") {
-            Picker("Period", selection: $reportsVM.filterPeriod) {
-                ForEach(TimePeriodFilter.allCases) { p in
-                    Text(p.rawValue).tag(p)
-                }
-            }
-            .pickerStyle(.segmented)
-
-            Picker("Status", selection: $reportsVM.filterStatus) {
-                ForEach(CompletionFilter.allCases) { f in
-                    Text(f.rawValue).tag(f)
-                }
-            }
-            .pickerStyle(.segmented)
-
-            Picker("Tag", selection: $reportsVM.filterTag) {
-                Text("All tags").tag(Optional<Tag>.none)
-                ForEach(tags) { tag in
-                    Text(tag.name).tag(Optional(tag))
                 }
             }
         }

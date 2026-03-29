@@ -63,6 +63,7 @@ struct HomeView: View {
                 .padding(.horizontal)
                 .padding(.vertical, 12)
             }
+            .background(Color(.systemGroupedBackground))
             .navigationTitle("New Task")
             .task {
                 await NotificationManager.shared.requestAuthorization()

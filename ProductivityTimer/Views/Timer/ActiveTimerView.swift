@@ -17,71 +17,75 @@ struct ActiveTimerView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 32) {
-                Spacer()
-
-                // Task info
-                if let task {
-                    VStack(spacing: 8) {
-                        if let tag = task.tag {
-                            Text(tag.name)
-                                .font(.caption)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 4)
-                                .background(Color(hex: tag.colorHex).opacity(0.2))
-                                .foregroundStyle(Color(hex: tag.colorHex))
-                                .clipShape(Capsule())
-                        }
-                        Text(task.label)
-                            .font(.title2.bold())
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-                }
-
-                // Progress ring
-                ZStack {
-                    ProgressRingView(progress: timerViewModel.progress)
-                        .frame(width: 220, height: 220)
-
-                    VStack(spacing: 4) {
-                        Text(TimeInterval(timerViewModel.elapsedSeconds).hhmmss)
-                            .font(.system(size: 38, weight: .bold, design: .monospaced))
-                            .foregroundStyle(timerViewModel.progress > 1 ? .red : .primary)
-
+            Form {
+                // Timer content
+                Section {
+                    VStack(spacing: 32) {
+                        // Task info
                         if let task {
-                            Text("of \(task.estimatedDuration.shortFormatted)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            VStack(spacing: 8) {
+                                if let tag = task.tag {
+                                    Text(tag.name)
+                                        .font(.caption)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 4)
+                                        .background(Color(hex: tag.colorHex).opacity(0.2))
+                                        .foregroundStyle(Color(hex: tag.colorHex))
+                                        .clipShape(Capsule())
+                                }
+                                Text(task.label)
+                                    .font(.title2.bold())
+                                    .multilineTextAlignment(.center)
+                            }
+                        }
+
+                        // Progress ring
+                        ZStack {
+                            ProgressRingView(progress: timerViewModel.progress)
+                                .frame(width: 220, height: 220)
+
+                            VStack(spacing: 4) {
+                                Text(TimeInterval(timerViewModel.elapsedSeconds).hhmmss)
+                                    .font(.system(size: 38, weight: .bold, design: .monospaced))
+                                    .foregroundStyle(timerViewModel.progress > 1 ? .red : .primary)
+
+                                if let task {
+                                    Text("of \(task.estimatedDuration.shortFormatted)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+
+                        // Overtime label
+                        if timerViewModel.progress > 1, let task {
+                            let over = TimeInterval(timerViewModel.elapsedSeconds) - task.estimatedDuration
+                            Text("Over by \(over.hhmmss)")
+                                .font(.subheadline)
+                                .foregroundStyle(.orange)
                         }
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 24)
                 }
-
-                // Overtime label
-                if timerViewModel.progress > 1, let task {
-                    let over = TimeInterval(timerViewModel.elapsedSeconds) - task.estimatedDuration
-                    Text("Over by \(over.hhmmss)")
-                        .font(.subheadline)
-                        .foregroundStyle(.orange)
-                }
-
-                Spacer()
 
                 // End button
-                Button {
-                    timerViewModel.endTask(context: context)
-                } label: {
-                    Label("End Task", systemImage: "stop.fill")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, buttonPaddingTop)
-                        .padding(.bottom, buttonPaddingBottom)
-                        .background(Color.red)
-                        .clipShape(RoundedRectangle(cornerRadius: buttonCornerRadius))
+                Section {
+                    Button {
+                        timerViewModel.endTask(context: context)
+                    } label: {
+                        Label("End Task", systemImage: "stop.fill")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, buttonPaddingTop)
+                            .padding(.bottom, buttonPaddingBottom)
+                    }
+                    .listRowBackground(
+                        RoundedRectangle(cornerRadius: buttonCornerRadius)
+                            .fill(Color.red)
+                    )
                 }
-                .padding(.horizontal, buttonHorizontalPadding)
-                .padding(.bottom, 32)
             }
             .navigationTitle("Timer Running")
             .navigationBarTitleDisplayMode(.inline)

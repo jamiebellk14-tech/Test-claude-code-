@@ -46,22 +46,23 @@ struct HomeView: View {
                     }
                 }
             }
+            .scrollDismissesKeyboard(.immediately)
             .navigationTitle("New Task")
-            .toolbar {
-                ToolbarItem(placement: .bottomBar) {
-                    Button {
-                        startTask()
-                    } label: {
-                        Label("Start Timer", systemImage: "play.fill")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.accentColor)
-                            .foregroundStyle(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
-                    }
-                    .padding(.horizontal)
+            .safeAreaInset(edge: .bottom) {
+                Button {
+                    startTask()
+                } label: {
+                    Text("Begin Task")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color(hex: "#00bf63"))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+                .background(Color(.systemGroupedBackground))
             }
             .task {
                 await NotificationManager.shared.requestAuthorization()

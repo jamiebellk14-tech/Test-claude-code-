@@ -126,6 +126,12 @@ final class ReportsViewModel {
         return dict.sorted { $0.key < $1.key }.map { (key: $0.key, tasks: $0.value) }
     }
 
+    // MARK: - Period filter (public for summary generation)
+
+    func byPeriodPublic(_ tasks: [TaskEntry]) -> [TaskEntry] {
+        byPeriod(tasks)
+    }
+
     // MARK: - Private
 
     private func byPeriod(_ tasks: [TaskEntry]) -> [TaskEntry] {

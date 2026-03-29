@@ -6,9 +6,12 @@ struct ReportsView: View {
     @Query private var tags: [Tag]
 
     @State private var reportsVM = ReportsViewModel()
+    @State private var summaryService = SummaryService()
     @State private var showChart = false
     @State private var expandedGroups: Set<String> = []
     @State private var selectedPage = 0
+    @State private var showAPIKeySheet = false
+    @State private var apiKeyDraft = ""
 
     var body: some View {
         NavigationStack {
@@ -131,6 +134,9 @@ struct ReportsView: View {
                 Text("Period")
             }
 
+            // AI Summary card
+            aiSummarySection(drains: drains)
+
             if drains.isEmpty {
                 Section {
                     VStack(spacing: 8) {
@@ -203,6 +209,157 @@ struct ReportsView: View {
                     }
                 } header: {
                     Text("\(drains.count) task\(drains.count == 1 ? "" : "s") ran over")
+                }
+            }
+        }
+    }
+
+    // MARK: - AI Summary
+
+    @ViewBuilder
+    private func aiSummarySection(drains: [TaskEntry]) -> some View {
+        Section {
+            if !summaryService.hasAPIKey {
+                Button {
+                    apiKeyDraft = ""
+                    showAPIKeySheet = true
+                } label: {
+                    HStack {
+                        Image(systemName: "sparkles")
+                            .foregroundStyle(.purple)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Set up AI Summary")
+                                .font(.subheadline.weight(.medium))
+                            Text("Tap to add your Anthropic API key")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+            } else if summaryService.isLoading {
+                HStack(spacing: 12) {
+                    ProgressView()
+                    Text("Analysing your day…")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 4)
+            } else if !summaryService.summary.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Image(systemName: "sparkles")
+                            .foregroundStyle(.purple)
+                        Text("AI Summary")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.purple)
+                        Spacer()
+                        Button {
+                            Task {
+                                await summaryService.generateSummary(
+                                    period: reportsVM.filterPeriod,
+                                    tasks: reportsVM.byPeriodPublic(allTasks)
+                                )
+                            }
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    Text(summaryService.summary)
+                        .font(.subheadline)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.vertical, 4)
+            } else if !summaryService.errorMessage.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Couldn't generate summary")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.red)
+                    Text(summaryService.errorMessage)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Button("Try again") {
+                        Task {
+                            await summaryService.generateSummary(
+                                period: reportsVM.filterPeriod,
+                                tasks: reportsVM.byPeriodPublic(allTasks)
+                            )
+                        }
+                    }
+                    .font(.caption)
+                }
+            } else {
+                Button {
+                    Task {
+                        await summaryService.generateSummary(
+                            period: reportsVM.filterPeriod,
+                            tasks: reportsVM.byPeriodPublic(allTasks)
+                        )
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "sparkles")
+                            .foregroundStyle(.purple)
+                        Text(drains.isEmpty ? "Summarise my \(reportsVM.filterPeriod.rawValue.lowercased())" : "Summarise what slowed me down")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.purple)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+            }
+        } header: {
+            Text("Summary")
+        }
+        .sheet(isPresented: $showAPIKeySheet) {
+            apiKeySheet
+        }
+    }
+
+    private var apiKeySheet: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Text("Get a free API key at console.anthropic.com — create an account, go to API Keys, and paste it below.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } header: {
+                    Text("Anthropic API Key")
+                }
+
+                Section {
+                    TextField("sk-ant-…", text: $apiKeyDraft)
+                        .font(.system(.body, design: .monospaced))
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                }
+
+                Section {
+                    Text("Your key is stored only on this device and is never sent anywhere except Anthropic's API.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .navigationTitle("API Key")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { showAPIKeySheet = false }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        summaryService.apiKey = apiKeyDraft.trimmingCharacters(in: .whitespaces)
+                        showAPIKeySheet = false
+                    }
+                    .disabled(apiKeyDraft.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
         }

@@ -83,7 +83,11 @@ struct ProductivityAIView: View {
             }
             .onChange(of: messages.count) {
                 withAnimation {
-                    proxy.scrollTo(isLoading ? "typing" : messages.last?.id, anchor: .bottom)
+                    if isLoading {
+                        proxy.scrollTo("typing", anchor: .bottom)
+                    } else {
+                        proxy.scrollTo(messages.last?.id, anchor: .bottom)
+                    }
                 }
             }
             .onChange(of: isLoading) {

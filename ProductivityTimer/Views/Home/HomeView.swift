@@ -14,8 +14,8 @@ struct HomeView: View {
 
     // ── Tweak these to adjust the Begin Task button ──
     private let buttonCornerRadius: CGFloat  = 8
-    private let buttonPaddingTop:    CGFloat = 12
-    private let buttonPaddingBottom: CGFloat = 12
+    private let buttonPaddingTop:    CGFloat = 10
+    private let buttonPaddingBottom: CGFloat = 1
     // ─────────────────────────────────────────────────
 
     var body: some View {

@@ -7,9 +7,9 @@ struct ActiveTimerView: View {
     @Environment(\.modelContext) private var context
 
     // ── Tweak these to adjust the End Task button ──
-    private let buttonCornerRadius: CGFloat = 8
-    private let buttonPaddingTop:   CGFloat = 12
-    private let buttonPaddingBottom: CGFloat = 12
+    private let buttonCornerRadius: CGFloat      = 8
+    private let buttonPaddingTop:    CGFloat     = 10
+    private let buttonPaddingBottom: CGFloat     = 1
     private let buttonHorizontalPadding: CGFloat = 24
     // ──────────────────────────────────────────────
 

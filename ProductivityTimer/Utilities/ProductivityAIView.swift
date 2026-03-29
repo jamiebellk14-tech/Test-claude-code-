@@ -81,6 +81,7 @@ struct ProductivityAIView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
+            .scrollDismissesKeyboard(.interactively)
             .onChange(of: messages.count) {
                 withAnimation {
                     if isLoading {

@@ -103,12 +103,12 @@ struct ReportsView: View {
                         ) {
                             ForEach(group.tasks) { task in
                                 TaskRowView(task: task)
-                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    .contextMenu {
                                         Button(role: .destructive) {
                                             context.delete(task)
                                             try? context.save()
                                         } label: {
-                                            Label("Delete", systemImage: "trash")
+                                            Label("Delete Task", systemImage: "trash")
                                         }
                                     }
                             }

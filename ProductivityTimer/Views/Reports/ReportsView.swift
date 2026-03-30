@@ -13,6 +13,8 @@ struct ReportsView: View {
     @State private var showAPIKeySheet = false
     @State private var apiKeyDraft = ""
 
+    @Environment(\.modelContext) private var context
+
     var body: some View {
         NavigationStack {
             TabView(selection: $selectedPage) {
@@ -101,6 +103,14 @@ struct ReportsView: View {
                         ) {
                             ForEach(group.tasks) { task in
                                 TaskRowView(task: task)
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                        Button(role: .destructive) {
+                                            context.delete(task)
+                                            try? context.save()
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                    }
                             }
                         } label: {
                             HStack {

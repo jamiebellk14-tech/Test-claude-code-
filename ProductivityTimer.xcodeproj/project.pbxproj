@@ -32,6 +32,8 @@
 		FB0000000000000000000017 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000017 /* Assets.xcassets */; };
 		FB0000000000000000000018 /* SummaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000018 /* SummaryService.swift */; };
 		FB0000000000000000000019 /* ProductivityAIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000019 /* ProductivityAIView.swift */; };
+		FB000000000000000000001A /* ScheduledTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA000000000000000000001A /* ScheduledTask.swift */; };
+		FB000000000000000000001B /* ScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA000000000000000000001B /* ScheduleView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -59,6 +61,8 @@
 		FA0000000000000000000016 /* DateExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateExtension.swift; sourceTree = "<group>"; };
 		FA0000000000000000000018 /* SummaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryService.swift; sourceTree = "<group>"; };
 		FA0000000000000000000019 /* ProductivityAIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductivityAIView.swift; sourceTree = "<group>"; };
+		FA000000000000000000001A /* ScheduledTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduledTask.swift; sourceTree = "<group>"; };
+		FA000000000000000000001B /* ScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleView.swift; sourceTree = "<group>"; };
 		FA0000000000000000000017 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FA0000000000000000000099 /* ProductivityTimer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProductivityTimer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -102,6 +106,7 @@
 				FA0000000000000000000003 /* Tag.swift */,
 				FA0000000000000000000004 /* TaskEntry.swift */,
 				FA0000000000000000000005 /* TaskUpdate.swift */,
+				FA000000000000000000001A /* ScheduledTask.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -182,6 +187,7 @@
 				FA0000000000000000000016 /* DateExtension.swift */,
 				FA0000000000000000000018 /* SummaryService.swift */,
 				FA0000000000000000000019 /* ProductivityAIView.swift */,
+				FA000000000000000000001B /* ScheduleView.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -268,6 +274,7 @@
 				FB0000000000000000000003 /* Tag.swift in Sources */,
 				FB0000000000000000000004 /* TaskEntry.swift in Sources */,
 				FB0000000000000000000005 /* TaskUpdate.swift in Sources */,
+				FB000000000000000000001A /* ScheduledTask.swift in Sources */,
 				FB0000000000000000000006 /* TimerViewModel.swift in Sources */,
 				FB0000000000000000000007 /* ReportsViewModel.swift in Sources */,
 				FB0000000000000000000008 /* TagViewModel.swift in Sources */,
@@ -287,6 +294,7 @@
 				FB0000000000000000000016 /* DateExtension.swift in Sources */,
 				FB0000000000000000000018 /* SummaryService.swift in Sources */,
 				FB0000000000000000000019 /* ProductivityAIView.swift in Sources */,
+				FB000000000000000000001B /* ScheduleView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

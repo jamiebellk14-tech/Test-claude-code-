@@ -26,15 +26,20 @@ struct ContentView: View {
                 .tabItem { Label("Reports", systemImage: "chart.bar.fill") }
                 .tag(1)
 
-            // Tab 2: Tags
-            TagManagementView()
-                .tabItem { Label("Tags", systemImage: "tag.fill") }
+            // Tab 2: Schedule
+            ScheduleView(timerViewModel: timerViewModel, selectedTab: $selectedTab)
+                .tabItem { Label("Schedule", systemImage: "list.bullet.clipboard") }
                 .tag(2)
 
-            // Tab 3: Productivity AI
+            // Tab 3: Tags
+            TagManagementView()
+                .tabItem { Label("Tags", systemImage: "tag.fill") }
+                .tag(3)
+
+            // Tab 4: Productivity AI
             ProductivityAIView()
                 .tabItem { Label("AI", systemImage: "sparkles") }
-                .tag(3)
+                .tag(4)
         }
         // Restore any in-progress task if app is relaunched mid-task
         .onAppear {

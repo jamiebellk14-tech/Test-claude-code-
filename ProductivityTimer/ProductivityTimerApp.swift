@@ -6,7 +6,7 @@ struct ProductivityTimerApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var sharedModelContainer: ModelContainer = {
-        let schema = Schema([Tag.self, TaskEntry.self, TaskUpdate.self])
+        let schema = Schema([Tag.self, TaskEntry.self, TaskUpdate.self, ScheduledTask.self])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         do {
             return try ModelContainer(for: schema, configurations: [config])

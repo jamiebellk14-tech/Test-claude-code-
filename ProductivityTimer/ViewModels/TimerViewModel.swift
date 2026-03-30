@@ -68,7 +68,8 @@ final class TimerViewModel {
         cancellable = Timer.publish(every: 1, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
-                self?.elapsedSeconds += 1
+                guard let self, let task = self.currentTask else { return }
+                self.elapsedSeconds = Int(Date().timeIntervalSince(task.startTime))
             }
     }
 

@@ -7,7 +7,6 @@ struct ContentView: View {
 
     @State private var timerViewModel = TimerViewModel()
     @State private var selectedTab: Int = 0
-    @State private var checkInTask: TaskEntry? = nil
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -41,17 +40,9 @@ struct ContentView: View {
         .onAppear {
             timerViewModel.restoreIfNeeded(from: allTasks)
         }
-        // Listen for notification-triggered check-in
-        .onReceive(NotificationCenter.default.publisher(for: .openCheckIn)) { notification in
-            guard let taskIDString = notification.userInfo?["taskID"] as? String,
-                  let taskID = UUID(uuidString: taskIDString),
-                  let task = allTasks.first(where: { $0.id == taskID }),
-                  task.isRunning else { return }
+        // Notification tap → just jump to the Timer tab
+        .onReceive(NotificationCenter.default.publisher(for: .openCheckIn)) { _ in
             selectedTab = 0
-            checkInTask = task
-        }
-        .sheet(item: $checkInTask) { task in
-            CheckInView(task: task, timerViewModel: timerViewModel)
         }
     }
 }

@@ -177,7 +177,7 @@ struct ScheduledTaskFormView: View {
         NavigationStack {
             Form {
                 Section("Task name") {
-                    TextField("e.g. Write project proposal", text: $label)
+                    AnimatedPlaceholderTextField(text: $label)
                 }
 
                 Section("Estimated duration") {

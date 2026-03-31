@@ -28,9 +28,7 @@ struct ScheduleView: View {
             .navigationTitle("Schedule")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showAddSheet = true
-                    } label: {
+                    Button { showAddSheet = true } label: {
                         Image(systemName: "plus")
                     }
                 }
@@ -67,6 +65,20 @@ struct ScheduleView: View {
                             .clipShape(Capsule())
                     }
                 }
+
+                // Note preview
+                if !task.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    HStack(alignment: .top, spacing: 4) {
+                        Image(systemName: "note.text")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Text(task.notes)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                    .padding(.top, 2)
+                }
             }
 
             Spacer()
@@ -87,7 +99,6 @@ struct ScheduleView: View {
             } label: {
                 Label("Edit", systemImage: "pencil")
             }
-
             Button(role: .destructive) {
                 context.delete(task)
                 try? context.save()
@@ -132,6 +143,12 @@ struct ScheduleView: View {
             tag: task.tag,
             context: context
         )
+        // Carry the pre-task note across as the first update
+        let trimmedNote = task.notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedNote.isEmpty, let currentTask = timerViewModel.currentTask {
+            let update = TaskUpdate(note: trimmedNote, task: currentTask)
+            context.insert(update)
+        }
         context.delete(task)
         try? context.save()
         selectedTab = 0
@@ -150,7 +167,9 @@ struct ScheduledTaskFormView: View {
     @State private var label: String = ""
     @State private var estimatedDuration: TimeInterval = 5 * 60
     @State private var selectedTag: Tag? = nil
+    @State private var notes: String = ""
     @State private var showValidationError = false
+    @FocusState private var notesFocused: Bool
 
     private var isEditing: Bool { existingTask != nil }
 
@@ -180,6 +199,24 @@ struct ScheduledTaskFormView: View {
                     }
                 }
 
+                Section {
+                    ZStack(alignment: .topLeading) {
+                        if notes.isEmpty {
+                            Text("Add details, reminders, or steps you'll need…")
+                                .foregroundStyle(.tertiary)
+                                .font(.body)
+                                .padding(.top, 8)
+                                .padding(.leading, 4)
+                                .allowsHitTesting(false)
+                        }
+                        TextEditor(text: $notes)
+                            .focused($notesFocused)
+                            .frame(minHeight: 120)
+                    }
+                } header: {
+                    Text("Pre-task notes")
+                }
+
                 if showValidationError {
                     Section {
                         Text("Please enter a task name and set a duration greater than 0.")
@@ -198,16 +235,55 @@ struct ScheduledTaskFormView: View {
                     Button(isEditing ? "Save" : "Add") { save() }
                         .bold()
                 }
+                ToolbarItemGroup(placement: .keyboard) {
+                    if notesFocused {
+                        Button {
+                            insertFormatting(bullet: true)
+                        } label: {
+                            Image(systemName: "list.bullet")
+                        }
+                        Button {
+                            insertFormatting(bullet: false)
+                        } label: {
+                            Image(systemName: "list.number")
+                        }
+                        Spacer()
+                    }
+                    Button("Done") {
+                        notesFocused = false
+                    }
+                }
             }
             .onAppear {
                 if let task = existingTask {
                     label = task.label
                     estimatedDuration = task.estimatedDuration
                     selectedTag = task.tag
+                    notes = task.notes
                 }
             }
         }
     }
+
+    // MARK: - Formatting helpers
+
+    private func insertFormatting(bullet: Bool) {
+        let needsNewline = !notes.isEmpty && !notes.hasSuffix("\n")
+        if bullet {
+            notes += (needsNewline ? "\n" : "") + "• "
+        } else {
+            // Count existing numbered items to get the next number
+            let lines = notes.components(separatedBy: "\n")
+            let numbered = lines.filter { line in
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                return trimmed.range(of: #"^\d+\."#, options: .regularExpression) != nil
+            }
+            let next = numbered.count + 1
+            notes += (needsNewline ? "\n" : "") + "\(next). "
+        }
+    }
+
+    // MARK: - Save
 
     private func save() {
         let trimmed = label.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -220,8 +296,14 @@ struct ScheduledTaskFormView: View {
             task.label = trimmed
             task.estimatedDuration = estimatedDuration
             task.tag = selectedTag
+            task.notes = notes
         } else {
-            let task = ScheduledTask(label: trimmed, estimatedDuration: estimatedDuration, tag: selectedTag)
+            let task = ScheduledTask(
+                label: trimmed,
+                estimatedDuration: estimatedDuration,
+                tag: selectedTag,
+                notes: notes
+            )
             context.insert(task)
         }
         try? context.save()

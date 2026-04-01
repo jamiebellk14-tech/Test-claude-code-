@@ -420,7 +420,7 @@ struct LiveDataCard: View {
                 Divider().frame(height: 28)
                 statCell("\(onTimePct)%", label: "On Time", color: .green)
                 Divider().frame(height: 28)
-                statCell("\(overtimeCount)", label: "Over", color: overtimeCount > 0 ? .orange : .secondary)
+                statCell("\(overtimeCount)", label: "Over", color: overtimeCount > 0 ? .orange : Color(.secondaryLabel))
             }
             .background(Color(.tertiarySystemBackground), in: RoundedRectangle(cornerRadius: 10))
 

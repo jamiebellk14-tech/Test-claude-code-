@@ -12,12 +12,6 @@ struct HomeView: View {
     @State private var selectedTag: Tag? = nil
     @State private var showValidationError = false
 
-    // ── Tweak these to adjust the Begin Task button ──
-    private let buttonCornerRadius: CGFloat  = 8
-    private let buttonPaddingTop:    CGFloat = 10
-    private let buttonPaddingBottom: CGFloat = 1
-    // ─────────────────────────────────────────────────
-
     var body: some View {
         NavigationStack {
             Form {
@@ -54,27 +48,23 @@ struct HomeView: View {
 
                 Section {
                     Button {
+                        HapticManager.medium()
                         startTask()
                     } label: {
                         Text("Begin Task")
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
                     }
-                    .listRowBackground(
-                        RoundedRectangle(cornerRadius: buttonCornerRadius)
-                            .fill(Color(hex: "#00bf63"))
-                    )
-                    .listRowInsets(EdgeInsets(
-                        top: buttonPaddingTop,
-                        leading: 0,
-                        bottom: buttonPaddingBottom,
-                        trailing: 0
-                    ))
+                    .buttonStyle(TactileButtonStyle())
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
                 }
             }
             .scrollDismissesKeyboard(.immediately)
-            .navigationTitle("New Task")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    TaskMindLogo(fontSize: 20)
+                }
+            }
             .task {
                 await NotificationManager.shared.requestAuthorization()
             }
@@ -164,17 +154,14 @@ struct AnimatedPlaceholderTextField: View {
         while !Task.isCancelled {
             let target = examples[idx]
 
-            // Type out character by character
             for charCount in 0...target.count {
                 guard !Task.isCancelled else { return }
                 displayText = String(target.prefix(charCount))
                 try? await Task.sleep(for: .milliseconds(75))
             }
 
-            // Pause at full text
             try? await Task.sleep(for: .seconds(2))
 
-            // Delete character by character (faster)
             var length = target.count
             while length > 0 {
                 guard !Task.isCancelled else { return }
@@ -183,7 +170,6 @@ struct AnimatedPlaceholderTextField: View {
                 try? await Task.sleep(for: .milliseconds(35))
             }
 
-            // Brief pause before next
             try? await Task.sleep(for: .milliseconds(400))
             idx = (idx + 1) % examples.count
         }

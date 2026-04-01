@@ -6,18 +6,14 @@ struct ActiveTimerView: View {
 
     @Environment(\.modelContext) private var context
 
-    // ── Tweak these to adjust the End Task button ──
-    private let buttonCornerRadius: CGFloat      = 8
-    private let buttonPaddingTop:    CGFloat     = 10
-    private let buttonPaddingBottom: CGFloat     = 1
-    private let buttonHorizontalPadding: CGFloat = 24
-    // ──────────────────────────────────────────────
-
     @State private var noteText = ""
     @FocusState private var noteFocused: Bool
 
     private var task: TaskEntry? { timerViewModel.currentTask }
     private var isOvertime: Bool { timerViewModel.progress > 1 }
+    private var tagColor: Color? {
+        task?.tag.map { Color(hex: $0.colorHex) }
+    }
 
     var body: some View {
         NavigationStack {
@@ -43,8 +39,11 @@ struct ActiveTimerView: View {
                         }
 
                         ZStack {
-                            ProgressRingView(progress: timerViewModel.progress)
-                                .frame(width: 220, height: 220)
+                            ProgressRingView(
+                                progress: timerViewModel.progress,
+                                tagColor: tagColor
+                            )
+                            .frame(width: 220, height: 220)
 
                             VStack(spacing: 4) {
                                 Text(TimeInterval(timerViewModel.elapsedSeconds).hhmmss)
@@ -100,6 +99,7 @@ struct ActiveTimerView: View {
 
                     if !noteText.trimmingCharacters(in: .whitespaces).isEmpty {
                         Button("Save note") {
+                            HapticManager.light()
                             timerViewModel.submitUpdate(note: noteText.trimmingCharacters(in: .whitespaces), context: context)
                             noteText = ""
                             noteFocused = false
@@ -113,23 +113,14 @@ struct ActiveTimerView: View {
                 // End button
                 Section {
                     Button {
+                        HapticManager.medium()
                         timerViewModel.endTask(context: context)
                     } label: {
                         Label("End Task", systemImage: "stop.fill")
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
                     }
-                    .listRowBackground(
-                        RoundedRectangle(cornerRadius: buttonCornerRadius)
-                            .fill(Color.red)
-                    )
-                    .listRowInsets(EdgeInsets(
-                        top: buttonPaddingTop,
-                        leading: 0,
-                        bottom: buttonPaddingBottom,
-                        trailing: 0
-                    ))
+                    .buttonStyle(TactileButtonStyle(color: .red))
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
                 }
             }
             .navigationTitle("Timer Running")

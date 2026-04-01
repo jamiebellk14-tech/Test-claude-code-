@@ -36,9 +36,9 @@ struct ContentView: View {
                 .tabItem { Label("Tags", systemImage: "tag.fill") }
                 .tag(3)
 
-            // Tab 4: Productivity AI
+            // Tab 4: TaskMind AI
             ProductivityAIView()
-                .tabItem { Label("AI", systemImage: "sparkles") }
+                .tabItem { Label("TaskMind", systemImage: "sparkles") }
                 .tag(4)
         }
         // Restore any in-progress task if app is relaunched mid-task

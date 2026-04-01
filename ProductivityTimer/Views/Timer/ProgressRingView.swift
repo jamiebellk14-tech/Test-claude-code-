@@ -2,10 +2,16 @@ import SwiftUI
 
 struct ProgressRingView: View {
     let progress: Double   // 0.0 = empty, 1.0 = full, >1.0 = overtime (turns red)
+    var tagColor: Color? = nil
     var lineWidth: CGFloat = 14
 
     private var clampedProgress: Double { min(progress, 1.0) }
     private var isOverTime: Bool { progress > 1.0 }
+
+    private var ringColor: Color {
+        if isOverTime { return .red }
+        return tagColor ?? .accentColor
+    }
 
     var body: some View {
         ZStack {
@@ -17,7 +23,7 @@ struct ProgressRingView: View {
             Circle()
                 .trim(from: 0, to: clampedProgress)
                 .stroke(
-                    isOverTime ? Color.red : Color.accentColor,
+                    ringColor,
                     style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))

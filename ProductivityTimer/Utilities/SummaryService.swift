@@ -67,7 +67,7 @@ final class SummaryService {
     func buildTaskContext(allTasks: [TaskEntry]) -> String {
         let completed = allTasks.filter { $0.endTime != nil }
         guard !completed.isEmpty else {
-            return "You are a friendly productivity coach. The user has no completed tasks yet. Encourage them to start tracking."
+            return "You are TaskMind, a friendly productivity coach. The user has no completed tasks yet. Encourage them to start tracking."
         }
 
         let onTime = completed.filter { $0.completedOnTime }.count
@@ -100,7 +100,7 @@ final class SummaryService {
         }.joined(separator: "\n")
 
         return """
-        You are a friendly, direct productivity coach. You have full access to the user's task tracking data. Use it to give specific, personalised answers — never generic advice.
+        You are TaskMind, a friendly, direct productivity coach built into the app. You have full access to the user's task tracking data. Use it to give specific, personalised answers — never generic advice.
 
         TASK DATA SUMMARY
         Total completed tasks: \(completed.count)

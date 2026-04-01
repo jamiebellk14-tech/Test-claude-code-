@@ -7,6 +7,8 @@ struct ChatMessage: Identifiable {
     let content: String
 }
 
+private let brandGreen = Color(hex: "#00bf63")
+
 struct ProductivityAIView: View {
     @Query(sort: \TaskEntry.startTime, order: .reverse) private var allTasks: [TaskEntry]
 
@@ -36,9 +38,11 @@ struct ProductivityAIView: View {
                     inputBar
                 }
             }
-            .navigationTitle("Productivity AI")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    TaskMindLogo(fontSize: 20)
+                }
                 if summaryService.hasAPIKey {
                     ToolbarItem(placement: .topBarTrailing) {
                         Menu {
@@ -106,11 +110,11 @@ struct ProductivityAIView: View {
             Spacer().frame(height: 20)
             Image(systemName: "sparkles")
                 .font(.system(size: 40))
-                .foregroundStyle(.purple)
-            Text("Ask me anything about your productivity")
+                .foregroundStyle(brandGreen)
+            Text("Your personal productivity coach")
                 .font(.headline)
                 .multilineTextAlignment(.center)
-            Text("I have access to all your task history and notes.")
+            Text("I know your full task history and can spot patterns.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -118,15 +122,16 @@ struct ProductivityAIView: View {
             VStack(spacing: 8) {
                 ForEach(suggestions, id: \.self) { suggestion in
                     Button {
+                        HapticManager.light()
                         inputText = suggestion
                         send()
                     } label: {
                         Text(suggestion)
                             .font(.subheadline)
-                            .foregroundStyle(.purple)
+                            .foregroundStyle(brandGreen)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
-                            .background(Color.purple.opacity(0.1), in: Capsule())
+                            .background(brandGreen.opacity(0.1), in: Capsule())
                     }
                 }
             }
@@ -142,9 +147,9 @@ struct ProductivityAIView: View {
         HStack(alignment: .bottom, spacing: 8) {
             Image(systemName: "sparkles")
                 .font(.caption)
-                .foregroundStyle(.purple)
+                .foregroundStyle(brandGreen)
             HStack(spacing: 4) {
-                ForEach(0..<3, id: \.self) { i in
+                ForEach(0..<3, id: \.self) { _ in
                     Circle()
                         .fill(Color.secondary.opacity(0.5))
                         .frame(width: 7, height: 7)
@@ -161,7 +166,7 @@ struct ProductivityAIView: View {
 
     private var inputBar: some View {
         HStack(alignment: .bottom, spacing: 10) {
-            TextField("Ask about your productivity…", text: $inputText, axis: .vertical)
+            TextField("Ask TaskMind…", text: $inputText, axis: .vertical)
                 .lineLimit(1...4)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
@@ -174,7 +179,7 @@ struct ProductivityAIView: View {
             } label: {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.system(size: 32))
-                    .foregroundStyle(canSend ? .purple : .secondary)
+                    .foregroundStyle(canSend ? brandGreen : .secondary)
             }
             .disabled(!canSend)
         }
@@ -193,6 +198,7 @@ struct ProductivityAIView: View {
         let text = inputText.trimmingCharacters(in: .whitespaces)
         guard !text.isEmpty, !isLoading else { return }
 
+        HapticManager.light()
         let userMessage = ChatMessage(role: "user", content: text)
         messages.append(userMessage)
         inputText = ""
@@ -225,8 +231,8 @@ struct ProductivityAIView: View {
             Spacer()
             Image(systemName: "sparkles")
                 .font(.system(size: 48))
-                .foregroundStyle(.purple)
-            Text("Productivity AI")
+                .foregroundStyle(brandGreen)
+            Text("Meet TaskMind")
                 .font(.title2.bold())
             Text("Chat with an AI coach that knows your full task history. Needs a free Anthropic API key to get started.")
                 .font(.subheadline)
@@ -238,12 +244,9 @@ struct ProductivityAIView: View {
                 showAPIKeySheet = true
             } label: {
                 Label("Add API Key", systemImage: "key.fill")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 28)
-                    .padding(.vertical, 14)
-                    .background(Color.purple, in: RoundedRectangle(cornerRadius: 14))
             }
+            .buttonStyle(TactileButtonStyle())
+            .frame(maxWidth: 260)
             Text("Get a free key at console.anthropic.com")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -307,7 +310,7 @@ struct ChatBubble: View {
             if !isUser {
                 Image(systemName: "sparkles")
                     .font(.caption)
-                    .foregroundStyle(.purple)
+                    .foregroundStyle(Color(hex: "#00bf63"))
                     .padding(.bottom, 4)
             }
 
@@ -316,7 +319,7 @@ struct ChatBubble: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
                 .background(
-                    isUser ? Color.purple : Color(.secondarySystemBackground),
+                    isUser ? Color(hex: "#00bf63") : Color(.secondarySystemBackground),
                     in: RoundedRectangle(cornerRadius: 18)
                 )
                 .foregroundStyle(isUser ? .white : .primary)

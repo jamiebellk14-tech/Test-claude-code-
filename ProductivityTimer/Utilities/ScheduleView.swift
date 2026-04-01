@@ -84,6 +84,7 @@ struct ScheduleView: View {
             Spacer()
 
             Button {
+                HapticManager.medium()
                 beginTask(task)
             } label: {
                 Image(systemName: "play.circle.fill")
@@ -124,12 +125,9 @@ struct ScheduleView: View {
                 showAddSheet = true
             } label: {
                 Label("Add Task", systemImage: "plus")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(Color(hex: "#00bf63"), in: RoundedRectangle(cornerRadius: 12))
             }
+            .buttonStyle(TactileButtonStyle())
+            .frame(maxWidth: 220)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

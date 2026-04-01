@@ -238,7 +238,7 @@ struct ReportsView: View {
                         Image(systemName: "sparkles")
                             .foregroundStyle(.purple)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Set up AI Summary")
+                            Text("Set up TaskMind Summary")
                                 .font(.subheadline.weight(.medium))
                             Text("Tap to add your Anthropic API key")
                                 .font(.caption)
@@ -265,7 +265,7 @@ struct ReportsView: View {
                     HStack {
                         Image(systemName: "sparkles")
                             .foregroundStyle(.purple)
-                        Text("AI Summary")
+                        Text("TaskMind")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.purple)
                         Spacer()

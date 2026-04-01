@@ -31,7 +31,7 @@ struct TactileButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
-        configuration.label
+        return configuration.label
             .font(.system(size: 17, weight: .semibold))
             .foregroundStyle(.white)
             .padding(.vertical, 14)
@@ -54,7 +54,7 @@ struct TactileOutlineButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
-        configuration.label
+        return configuration.label
             .font(.system(size: 17, weight: .semibold))
             .foregroundStyle(color)
             .padding(.vertical, 14)

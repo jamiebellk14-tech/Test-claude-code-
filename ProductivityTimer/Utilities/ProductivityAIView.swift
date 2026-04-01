@@ -415,7 +415,10 @@ struct ChatBubble: View {
 
     @ViewBuilder
     private func markdownText(_ string: String) -> some View {
-        if let attributed = try? AttributedString(markdown: string) {
+        if let attributed = try? AttributedString(
+            markdown: string,
+            options: .init(interpretedSyntax: .inlinesOnlyPreservingWhitespace)
+        ) {
             Text(attributed)
         } else {
             Text(string)

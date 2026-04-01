@@ -60,12 +60,12 @@ struct TactileOutlineButtonStyle: ButtonStyle {
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity)
             .background {
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(Color(.systemBackground))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: cornerRadius)
-                            .strokeBorder(color, lineWidth: 2)
-                    )
+                ZStack {
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(Color(.systemBackground))
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .strokeBorder(color, lineWidth: 2)
+                }
             }
             .compositingGroup()
             .shadow(color: color, radius: 0, x: 0, y: pressed ? 0 : ledge)

@@ -18,6 +18,8 @@ struct ProductivityAIView: View {
     @State private var isLoading = false
     @State private var showAPIKeySheet = false
     @State private var apiKeyDraft = ""
+    @State private var typingMessageID: UUID? = nil
+    @State private var typingText: String = ""
     @FocusState private var inputFocused: Bool
 
     private let suggestions = [
@@ -73,11 +75,14 @@ struct ProductivityAIView: View {
                         emptyState
                     } else {
                         ForEach(messages) { message in
-                            ChatBubble(message: message)
-                                .id(message.id)
+                            ChatBubble(
+                                message: message,
+                                displayText: typingMessageID == message.id ? typingText : nil
+                            )
+                            .id(message.id)
                         }
                         if isLoading {
-                            typingIndicator
+                            thinkingIndicator
                                 .id("typing")
                         }
                     }
@@ -100,7 +105,25 @@ struct ProductivityAIView: View {
                     withAnimation { proxy.scrollTo("typing", anchor: .bottom) }
                 }
             }
+            .onChange(of: typingText) {
+                proxy.scrollTo(typingMessageID, anchor: .bottom)
+            }
         }
+    }
+
+    // MARK: - Thinking indicator
+
+    private var thinkingIndicator: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "sparkles")
+                .font(.caption)
+                .foregroundStyle(brandGreen)
+            ThinkingDotsText()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18))
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Empty state with suggestions
@@ -139,27 +162,6 @@ struct ProductivityAIView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 8)
-    }
-
-    // MARK: - Typing indicator
-
-    private var typingIndicator: some View {
-        HStack(alignment: .bottom, spacing: 8) {
-            Image(systemName: "sparkles")
-                .font(.caption)
-                .foregroundStyle(brandGreen)
-            HStack(spacing: 4) {
-                ForEach(0..<3, id: \.self) { _ in
-                    Circle()
-                        .fill(Color.secondary.opacity(0.5))
-                        .frame(width: 7, height: 7)
-                }
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18))
-            Spacer()
-        }
     }
 
     // MARK: - Input bar
@@ -212,8 +214,10 @@ struct ProductivityAIView: View {
                     allTasks: allTasks
                 )
                 await MainActor.run {
-                    messages.append(ChatMessage(role: "assistant", content: reply))
+                    let newMsg = ChatMessage(role: "assistant", content: reply)
+                    messages.append(newMsg)
                     isLoading = false
+                    startTypewriter(text: reply, id: newMsg.id)
                 }
             } catch {
                 await MainActor.run {
@@ -221,6 +225,22 @@ struct ProductivityAIView: View {
                     isLoading = false
                 }
             }
+        }
+    }
+
+    // MARK: - Typewriter
+
+    private func startTypewriter(text: String, id: UUID) {
+        typingMessageID = id
+        typingText = ""
+        let chars = Array(text)
+        Task {
+            for i in chars.indices {
+                guard typingMessageID == id else { return }
+                await MainActor.run { typingText = String(chars[0...i]) }
+                try? await Task.sleep(for: .milliseconds(10))
+            }
+            await MainActor.run { typingMessageID = nil }
         }
     }
 
@@ -296,12 +316,40 @@ struct ProductivityAIView: View {
     }
 }
 
+// MARK: - "TaskMind is thinking..." animated indicator
+
+struct ThinkingDotsText: View {
+    @State private var dotCount = 0
+
+    var body: some View {
+        Text("TaskMind is thinking" + String(repeating: ".", count: dotCount))
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .task {
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .milliseconds(420))
+                    dotCount = (dotCount + 1) % 4
+                }
+            }
+    }
+}
+
 // MARK: - Chat bubble
 
 struct ChatBubble: View {
     let message: ChatMessage
+    var displayText: String? = nil   // non-nil during typewriter animation
 
     private var isUser: Bool { message.role == "user" }
+    private var text: String { displayText ?? message.content }
+
+    // Heuristic: assistant messages with % or many numbers get a report card style
+    private var isReport: Bool {
+        guard !isUser, displayText == nil else { return false }
+        let percentCount = message.content.components(separatedBy: "%").count - 1
+        let digitCount = message.content.filter(\.isNumber).count
+        return percentCount >= 2 || digitCount > 10
+    }
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 8) {
@@ -310,22 +358,70 @@ struct ChatBubble: View {
             if !isUser {
                 Image(systemName: "sparkles")
                     .font(.caption)
-                    .foregroundStyle(Color(hex: "#00bf63"))
+                    .foregroundStyle(brandGreen)
                     .padding(.bottom, 4)
             }
 
-            Text(message.content)
-                .font(.subheadline)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(
-                    isUser ? Color(hex: "#00bf63") : Color(.secondarySystemBackground),
-                    in: RoundedRectangle(cornerRadius: 18)
-                )
-                .foregroundStyle(isUser ? .white : .primary)
+            if isReport {
+                reportCard
+            } else {
+                standardBubble
+            }
 
             if !isUser { Spacer(minLength: 48) }
         }
         .frame(maxWidth: .infinity, alignment: isUser ? .trailing : .leading)
+    }
+
+    // Standard chat bubble
+    private var standardBubble: some View {
+        markdownText(text)
+            .font(.subheadline)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(
+                isUser ? brandGreen : Color(.secondarySystemBackground),
+                in: RoundedRectangle(cornerRadius: 18)
+            )
+            .foregroundStyle(isUser ? .white : .primary)
+    }
+
+    // Tinted card for data-heavy insight responses
+    private var reportCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 5) {
+                Image(systemName: "chart.bar.fill")
+                    .font(.caption2)
+                Text("Insight")
+                    .font(.caption.weight(.semibold))
+            }
+            .foregroundStyle(brandGreen)
+
+            markdownText(text)
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(brandGreen.opacity(0.07))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(brandGreen.opacity(0.2), lineWidth: 1)
+        )
+    }
+
+    @ViewBuilder
+    private func markdownText(_ string: String) -> some View {
+        if let attributed = try? AttributedString(
+            markdown: string,
+            options: .init(interpretedSyntax: .inlinesOnlyPreservingWhitespace)
+        ) {
+            Text(attributed)
+        } else {
+            Text(string)
+        }
     }
 }

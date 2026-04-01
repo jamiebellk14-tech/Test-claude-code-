@@ -24,4 +24,15 @@ extension Color {
         return String(format: "#%02X%02X%02X",
                       Int(r * 255), Int(g * 255), Int(b * 255))
     }
+
+    func darkened(by factor: Double = 0.28) -> Color {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &a)
+        return Color(
+            red: Double(r) * (1 - factor),
+            green: Double(g) * (1 - factor),
+            blue: Double(b) * (1 - factor),
+            opacity: Double(a)
+        )
+    }
 }

@@ -38,7 +38,7 @@ struct TactileButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .background(color, in: RoundedRectangle(cornerRadius: cornerRadius))
             .compositingGroup()
-            .shadow(color: color.brightness(-0.28), radius: 0, x: 0, y: pressed ? 0 : ledge)
+            .shadow(color: color.darkened(), radius: 0, x: 0, y: pressed ? 0 : ledge)
             .offset(y: pressed ? ledge : 0)
             .padding(.bottom, ledge)
             .animation(.easeOut(duration: 0.1), value: pressed)

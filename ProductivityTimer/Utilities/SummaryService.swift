@@ -114,6 +114,20 @@ final class SummaryService {
         \(recentLines)
 
         Answer questions concisely. Be direct and specific. If you spot a pattern, name it. Keep responses under 150 words unless a longer answer is clearly needed.
+
+        FORMATTING — follow these rules exactly:
+        - Use **bold** for tag names, key numbers, and insight headers
+        - Put a blank line between every distinct point or section
+        - Never run separate data items together on the same line
+        - Use "——" on its own line to introduce a key insight or summary
+        - Example of correct format:
+          **Work:** 3 tasks — 1 on time, 2 over
+
+          **Personal:** 2 tasks — both on time
+
+          ——
+
+          **Key insight:** Work tasks consistently run over.
         """
     }
 

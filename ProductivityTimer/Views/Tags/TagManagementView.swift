@@ -24,6 +24,7 @@ struct TagManagementView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    .cardRow()
                 }
                 .onDelete { indexSet in
                     for index in indexSet {

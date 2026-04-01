@@ -1,5 +1,14 @@
 import Foundation
 
+private extension DateFormatter {
+    static let full: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .full
+        f.timeStyle = .none
+        return f
+    }()
+}
+
 @Observable
 final class SummaryService {
     var summary: String = ""
@@ -51,23 +60,47 @@ final class SummaryService {
 
     // MARK: - Productivity AI chat (multi-turn)
 
-    func chat(history: [ChatMessage], newMessage: String, allTasks: [TaskEntry]) async throws -> String {
-        let system = buildTaskContext(allTasks: allTasks)
+    func chat(history: [ChatMessage], newMessage: String, allTasks: [TaskEntry], allTags: [Tag]) async throws -> String {
+        let system = buildTaskContext(allTasks: allTasks, allTags: allTags)
 
         var apiMessages: [[String: String]] = history.map {
             ["role": $0.role, "content": $0.content]
         }
         apiMessages.append(["role": "user", "content": newMessage])
 
-        return try await callClaude(messages: apiMessages, system: system, maxTokens: 500)
+        return try await callClaude(messages: apiMessages, system: system, maxTokens: 600)
     }
 
     // MARK: - Context builder
 
-    func buildTaskContext(allTasks: [TaskEntry]) -> String {
+    private func relativeDay(for date: Date) -> String {
+        let cal = Calendar.current
+        if cal.isDateInToday(date) { return "Today" }
+        if cal.isDateInYesterday(date) { return "Yesterday" }
+        let days = cal.dateComponents([.day], from: date, to: Date()).day ?? 0
+        if days < 7 {
+            let fmt = DateFormatter()
+            fmt.dateFormat = "EEEE"
+            return fmt.string(from: date)
+        }
+        let fmt = DateFormatter()
+        fmt.dateFormat = "dd MMM"
+        return fmt.string(from: date)
+    }
+
+    func buildTaskContext(allTasks: [TaskEntry], allTags: [Tag]) -> String {
+        let today = DateFormatter.full.string(from: Date())
         let completed = allTasks.filter { $0.endTime != nil }
+
+        let tagNames = allTags.map { $0.name }.sorted().joined(separator: ", ")
+
         guard !completed.isEmpty else {
-            return "You are TaskMind, a friendly productivity coach. The user has no completed tasks yet. Encourage them to start tracking."
+            return """
+            You are TaskMind — a sharp, direct productivity coach built into this app.
+            Today is \(today).
+            The user has no completed tasks yet. Encourage them to start tracking.
+            Available tags: \(tagNames.isEmpty ? "none yet" : tagNames)
+            """
         }
 
         let onTime = completed.filter { $0.completedOnTime }.count
@@ -87,47 +120,62 @@ final class SummaryService {
             return "  - \(name): \(val.count) task\(val.count == 1 ? "" : "s")\(otStr)"
         }.joined(separator: "\n")
 
-        // Recent 15 tasks
-        let recent = completed.sorted { $0.startTime > $1.startTime }.prefix(15)
+        // Today's tasks
+        let cal = Calendar.current
+        let todayTasks = completed.filter { cal.isDateInToday($0.startTime) }
+        let todayLines: String
+        if todayTasks.isEmpty {
+            todayLines = "  (none completed today)"
+        } else {
+            todayLines = todayTasks.map { task in
+                let tag = task.tag?.name ?? "Untagged"
+                let status = task.isOverTime ? "over" : "on time"
+                return "  - \"\(task.label)\" [\(tag)] — \(status)"
+            }.joined(separator: "\n")
+        }
+
+        // Recent 20 tasks with date labels
+        let recent = completed.sorted { $0.startTime > $1.startTime }.prefix(20)
         let recentLines = recent.map { task in
             let tag = task.tag?.name ?? "Untagged"
+            let day = relativeDay(for: task.startTime)
             let status = task.isOverTime
                 ? "+\(max(0, (task.actualDuration ?? 0) - task.estimatedDuration).shortFormatted) over"
                 : "on time"
             let notes = task.updates.map { $0.note }.joined(separator: "; ")
             let noteStr = notes.isEmpty ? "" : " | Note: \"\(notes)\""
-            return "  - \"\(task.label)\" [\(tag)] — \(status)\(noteStr)"
+            return "  - [\(day)] \"\(task.label)\" [\(tag)] — \(status)\(noteStr)"
         }.joined(separator: "\n")
 
         return """
-        You are TaskMind, a friendly, direct productivity coach built into the app. You have full access to the user's task tracking data. Use it to give specific, personalised answers — never generic advice.
+        You are TaskMind — a sharp, direct productivity coach built into this app.
+        You have full access to task history including dates. Today is \(today).
+
+        Rules:
+        - Under 80 words for most replies. Be specific, not generic.
+        - When a data chart is shown to the user, give 1-2 sentence insight only — don't repeat the numbers.
+        - You can add tasks to the user's schedule. When asked, respond with a confirmation message and embed: {{SCHEDULE:[{"label":"...","minutes":N,"tag":"..."}]}}
+        - Tag names must match exactly from the Available tags list. If unsure, omit the tag field.
+        - Speak like a coach, not a chatbot.
+
+        FORMATTING:
+        - Use **bold** for tag names, key numbers, and insights
+        - Blank line between each distinct point
+        - Use "——" on its own line before a key insight
 
         TASK DATA SUMMARY
-        Total completed tasks: \(completed.count)
-        On time: \(onTime) (\(onTimePct)%)
-        Over estimate: \(overtime)
+        Total completed: \(completed.count) | On time: \(onTime) (\(onTimePct)%) | Over estimate: \(overtime)
+
+        Today's completed tasks:
+        \(todayLines)
 
         Breakdown by tag:
         \(tagLines)
 
-        Recent tasks (newest first):
+        Recent tasks (newest first, up to 20):
         \(recentLines)
 
-        Answer questions concisely. Be direct and specific. If you spot a pattern, name it. Keep responses under 150 words unless a longer answer is clearly needed.
-
-        FORMATTING — follow these rules exactly:
-        - Use **bold** for tag names, key numbers, and insight headers
-        - Put a blank line between every distinct point or section
-        - Never run separate data items together on the same line
-        - Use "——" on its own line to introduce a key insight or summary
-        - Example of correct format:
-          **Work:** 3 tasks — 1 on time, 2 over
-
-          **Personal:** 2 tasks — both on time
-
-          ——
-
-          **Key insight:** Work tasks consistently run over.
+        Available tags: \(tagNames.isEmpty ? "none yet" : tagNames)
         """
     }
 

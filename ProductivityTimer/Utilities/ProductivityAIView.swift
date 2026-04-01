@@ -7,10 +7,19 @@ struct ChatMessage: Identifiable {
     let content: String
 }
 
+struct ScheduledTaskDraft: Identifiable {
+    let id = UUID()
+    let label: String
+    let minutes: Int
+    let tagName: String?
+}
+
 private let brandGreen = Color(hex: "#00bf63")
 
 struct ProductivityAIView: View {
     @Query(sort: \TaskEntry.startTime, order: .reverse) private var allTasks: [TaskEntry]
+    @Query(sort: \Tag.name) private var allTags: [Tag]
+    @Environment(\.modelContext) private var context
 
     @State private var summaryService = SummaryService()
     @State private var messages: [ChatMessage] = []
@@ -20,6 +29,7 @@ struct ProductivityAIView: View {
     @State private var apiKeyDraft = ""
     @State private var typingMessageID: UUID? = nil
     @State private var typingText: String = ""
+    @State private var pendingActions: [UUID: [ScheduledTaskDraft]] = [:]
     @FocusState private var inputFocused: Bool
 
     private let suggestions = [
@@ -50,6 +60,7 @@ struct ProductivityAIView: View {
                         Menu {
                             Button("Clear chat", role: .destructive) {
                                 messages = []
+                                pendingActions = [:]
                             }
                             Button("Change API key") {
                                 apiKeyDraft = summaryService.apiKey
@@ -81,6 +92,15 @@ struct ProductivityAIView: View {
                                 allTasks: Array(allTasks)
                             )
                             .id(message.id)
+
+                            if let drafts = pendingActions[message.id] {
+                                ScheduleActionCard(drafts: drafts) {
+                                    addToSchedule(drafts: drafts, messageID: message.id)
+                                } onDismiss: {
+                                    pendingActions.removeValue(forKey: message.id)
+                                }
+                                .padding(.leading, 28)
+                            }
                         }
                         if isLoading {
                             thinkingIndicator.id("typing")
@@ -173,11 +193,11 @@ struct ProductivityAIView: View {
                 .focused($inputFocused)
                 .onSubmit { send() }
             Button { send() } label: {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.system(size: 32))
-                    .foregroundStyle(canSend ? brandGreen : .secondary)
+                Image(systemName: "arrow.up")
             }
+            .buttonStyle(TactileSendButtonStyle())
             .disabled(!canSend)
+            .opacity(canSend ? 1 : 0.4)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -197,18 +217,25 @@ struct ProductivityAIView: View {
         messages.append(ChatMessage(role: "user", content: text))
         inputText = ""
         isLoading = true
+        let tagsCopy = Array(allTags)
         Task {
             do {
                 let reply = try await summaryService.chat(
                     history: messages.dropLast(),
                     newMessage: text,
-                    allTasks: allTasks
+                    allTasks: allTasks,
+                    allTags: tagsCopy
                 )
                 await MainActor.run {
-                    let newMsg = ChatMessage(role: "assistant", content: reply)
+                    let parsed = parseScheduleAction(from: reply)
+                    let cleanText = parsed?.cleanText ?? reply
+                    let newMsg = ChatMessage(role: "assistant", content: cleanText)
                     messages.append(newMsg)
+                    if let drafts = parsed?.drafts, !drafts.isEmpty {
+                        pendingActions[newMsg.id] = drafts
+                    }
                     isLoading = false
-                    startTypewriter(text: reply, id: newMsg.id)
+                    startTypewriter(text: cleanText, id: newMsg.id)
                 }
             } catch {
                 await MainActor.run {
@@ -217,6 +244,56 @@ struct ProductivityAIView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Schedule action parsing
+
+    private func parseScheduleAction(from text: String) -> (cleanText: String, drafts: [ScheduledTaskDraft])? {
+        guard let regex = try? NSRegularExpression(
+            pattern: #"\{\{SCHEDULE:(\[.*?\])\}\}"#,
+            options: [.dotMatchesLineSeparators]
+        ) else { return nil }
+
+        let range = NSRange(text.startIndex..., in: text)
+        guard let match = regex.firstMatch(in: text, range: range),
+              let jsonRange = Range(match.range(at: 1), in: text) else { return nil }
+
+        let jsonString = String(text[jsonRange])
+        guard let jsonData = jsonString.data(using: .utf8),
+              let rawItems = try? JSONSerialization.jsonObject(with: jsonData) as? [[String: Any]]
+        else { return nil }
+
+        let drafts: [ScheduledTaskDraft] = rawItems.compactMap { item in
+            guard let label = item["label"] as? String,
+                  let minutes = item["minutes"] as? Int else { return nil }
+            let tagName = item["tag"] as? String
+            return ScheduledTaskDraft(label: label, minutes: minutes, tagName: tagName)
+        }
+
+        let fullMatch = Range(match.range, in: text).map { String(text[$0]) } ?? ""
+        let cleanText = text.replacingOccurrences(of: fullMatch, with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return (cleanText, drafts)
+    }
+
+    // MARK: - Add to schedule
+
+    private func addToSchedule(drafts: [ScheduledTaskDraft], messageID: UUID) {
+        for draft in drafts {
+            let matchedTag = allTags.first {
+                $0.name.lowercased() == (draft.tagName ?? "").lowercased()
+            }
+            let task = ScheduledTask(
+                label: draft.label,
+                estimatedDuration: TimeInterval(draft.minutes * 60),
+                tag: matchedTag,
+                notes: ""
+            )
+            context.insert(task)
+        }
+        try? context.save()
+        HapticManager.medium()
+        pendingActions.removeValue(forKey: messageID)
     }
 
     private func startTypewriter(text: String, id: UUID) {
@@ -287,6 +364,46 @@ struct ProductivityAIView: View {
     }
 }
 
+// MARK: - Schedule Action Card
+
+struct ScheduleActionCard: View {
+    let drafts: [ScheduledTaskDraft]
+    let onAdd: () -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "calendar.badge.plus")
+                    .foregroundStyle(brandGreen)
+                Text("Add to Schedule")
+                    .font(.subheadline.weight(.semibold))
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(drafts) { draft in
+                    HStack(spacing: 6) {
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 5))
+                            .foregroundStyle(.secondary)
+                        Text("\(draft.label) — \(draft.minutes)m\(draft.tagName.map { " [\($0)]" } ?? "")")
+                            .font(.subheadline)
+                    }
+                }
+            }
+            HStack(spacing: 8) {
+                Button("Add to Schedule", action: onAdd)
+                    .buttonStyle(TactileButtonStyle())
+                Button("Dismiss", action: onDismiss)
+                    .buttonStyle(TactileOutlineButtonStyle())
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(brandGreen.opacity(0.3), lineWidth: 1))
+    }
+}
+
 // MARK: - "TaskMind is thinking..." animated indicator
 
 struct ThinkingDotsText: View {
@@ -321,6 +438,20 @@ struct ChatBubble: View {
         return pctCount >= 2 || digitCount > 10
     }
 
+    // When live card is shown, extract only the key insight text
+    private var insightText: String {
+        let content = message.content
+        if let range = content.range(of: "——") {
+            let after = String(content[range.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+            if !after.isEmpty { return after }
+        }
+        let paragraphs = content
+            .components(separatedBy: "\n\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        return paragraphs.last ?? content
+    }
+
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             if isUser { Spacer(minLength: 48) }
@@ -333,7 +464,7 @@ struct ChatBubble: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                // Live data card appears above the AI explanation for report responses
+                // Live data card appears above the AI insight for report responses
                 if showLiveCard {
                     LiveDataCard(allTasks: allTasks)
                 }
@@ -347,7 +478,8 @@ struct ChatBubble: View {
     }
 
     private var standardBubble: some View {
-        markdownText(text)
+        let displayContent = showLiveCard ? insightText : text
+        return markdownText(displayContent)
             .font(.subheadline)
             .padding(.horizontal, 14)
             .padding(.vertical, 10)

@@ -41,6 +41,10 @@ struct ContentView: View {
                 .tabItem { Label("TaskMind", systemImage: "sparkles") }
                 .tag(4)
         }
+        .tint(Color(hex: "#00bf63"))
+        .onChange(of: selectedTab) {
+            HapticManager.heavy()
+        }
         // Restore any in-progress task if app is relaunched mid-task
         .onAppear {
             timerViewModel.restoreIfNeeded(from: allTasks)

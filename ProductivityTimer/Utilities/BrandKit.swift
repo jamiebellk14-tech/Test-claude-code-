@@ -300,7 +300,7 @@ struct TactileTabBar: View {
         .background {
             ZStack {
                 RoundedRectangle(cornerRadius: 20).fill(tabGreen)
-                RoundedRectangle(cornerRadius: 20).strokeBorder(Color.white.opacity(0.25), lineWidth: 5)
+                RoundedRectangle(cornerRadius: 20).strokeBorder(Color.white.opacity(0.25), lineWidth: 0.5)
             }
             .shadow(color: tabGreen.darkened(by: 0.55), radius: 0, x: 0, y: 6)
         }
@@ -335,7 +335,7 @@ struct TactileTabItem: View {
                     RoundedRectangle(cornerRadius: 14)
                         .fill(isSelected ? Color.white.opacity(0.22) : Color.white.opacity(0.07))
                     RoundedRectangle(cornerRadius: 14)
-                        .strokeBorder(Color.white.opacity(0.25), lineWidth: 1)
+                        .strokeBorder(Color.white.opacity(0.25), lineWidth: 0)
                 }
                 .shadow(
                     color: tabGreen.darkened(by: 0.55),

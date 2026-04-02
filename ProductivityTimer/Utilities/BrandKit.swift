@@ -228,7 +228,7 @@ private struct _NavLedgeStyle: ButtonStyle {
     private var shadowColor: Color   { Color(hex: "#00bf63").darkened(by: 0.45) }
     private var shadowRadius: CGFloat { 0 }
     private var shadowX: CGFloat     { 0 }
-    private var shadowY: CGFloat     { 1 }   // set to 0 to remove shadow
+    private var shadowY: CGFloat     { 10 }   // set to 0 to remove shadow
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed

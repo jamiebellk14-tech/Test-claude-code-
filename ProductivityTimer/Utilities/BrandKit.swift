@@ -160,11 +160,14 @@ struct BrandNavBar: View {
         BrandNavBar(center: .custom(AnyView(view)), leading: leading, trailing: trailing)
     }
 
+    private let ledge: CGFloat = 4
+
     var body: some View {
         ZStack(alignment: .bottom) {
-            // App background — no coloured bar, just the tactile badge logo stands out
+            // Hard-ledge shadow makes the nav bar feel like a raised physical shelf
             Color(.systemBackground)
                 .ignoresSafeArea(edges: .top)
+                .shadow(color: Color(.label).opacity(0.18), radius: 0, x: 0, y: ledge)
 
             HStack(spacing: 0) {
                 Group {
@@ -283,12 +286,13 @@ struct TactileTabBar: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        // Solid brand green pill — shadow applied to shape only (not text/icons)
+        // Hard ledge on the shape only — same tactile style as Begin Task button
         .background {
             RoundedRectangle(cornerRadius: 20)
                 .fill(tabGreen)
-                .shadow(color: tabGreen.darkened(by: 0.50), radius: 0, x: 0, y: 5)
+                .shadow(color: tabGreen.darkened(by: 0.55), radius: 0, x: 0, y: 6)
         }
+        .padding(.bottom, 6)   // clear space for the ledge shadow to show
         .padding(.horizontal, 20)
         .padding(.bottom, 8)
     }
@@ -300,38 +304,32 @@ struct TactileTabItem: View {
     let isSelected: Bool
     let action: () -> Void
 
-    private let ledge: CGFloat = 2
-    
-    // ── Icon shadow (edit independently) ──────────────────────────────────────
-    private var iconShadowColor: Color  { .black.opacity(0.3) }
-    private var iconShadowRadius: CGFloat { 0 }
-    private var iconShadowX: CGFloat    { 0 }
-    private var iconShadowY: CGFloat    { 1.5 }
-
-    // ── Label shadow (edit independently) ─────────────────────────────────────
-    private var labelShadowColor: Color  { .black.opacity(0.3) }
-    private var labelShadowRadius: CGFloat { 0 }
-    private var labelShadowX: CGFloat    { 0 }
-    private var labelShadowY: CGFloat    { 1.2 }
+    private let ledge: CGFloat = 3
 
     var body: some View {
         Button(action: action) {
             VStack(spacing: 3) {
                 Image(systemName: icon)
                     .font(.system(size: 17, weight: isSelected ? .bold : .medium))
-                    .shadow(color: iconShadowColor, radius: iconShadowRadius, x: iconShadowX, y: iconShadowY)
                 Text(label)
                     .font(.system(size: 9, weight: isSelected ? .semibold : .regular))
-                    .shadow(color: labelShadowColor, radius: labelShadowRadius, x: labelShadowX, y: labelShadowY)
             }
             .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.55))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 7)
+            // Hard ledge on the background shape — collapses when pressed in (selected)
             .background(
                 RoundedRectangle(cornerRadius: 14)
                     .fill(isSelected ? Color.white.opacity(0.22) : Color.white.opacity(0.07))
+                    .shadow(
+                        color: tabGreen.darkened(by: 0.55),
+                        radius: 0,
+                        x: 0,
+                        y: isSelected ? 0 : ledge   // collapses when selected/pressed
+                    )
             )
-            .offset(y: isSelected ? ledge : 0)
+            .offset(y: isSelected ? ledge : 0)      // face sinks down to meet the ledge
+            .padding(.bottom, ledge)                 // reserve space so ledge shadow is visible
         }
         .buttonStyle(.plain)
         .animation(.spring(response: 0.18, dampingFraction: 0.65), value: isSelected)

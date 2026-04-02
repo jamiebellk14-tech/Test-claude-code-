@@ -222,7 +222,7 @@ struct TactileNavButton: View {
 }
 
 private struct _NavLedgeStyle: ButtonStyle {
-    private let ledge: CGFloat = 3
+    private let ledge: CGFloat = 1
     private let shadowColor = Color(hex: "#00bf63").darkened(by: 0.45)
 
     func makeBody(configuration: Configuration) -> some View {
@@ -274,9 +274,9 @@ struct TactileTabBar: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         // Solid brand green pill — same colour as nav bar
-        .background(tabGreen, in: RoundedRectangle(cornerRadius: 26))
+        .background(tabGreen, in: RoundedRectangle(cornerRadius: 15))
         // Dark-green drop shadow lifts the pill off the screen
-        .shadow(color: tabGreen.darkened(by: 0.55), radius: 0, x: 0, y: 6)
+        .shadow(color: tabGreen.darkened(by: 0.50), radius: 0, x: 0, y: 5)
         .padding(.horizontal, 20)
         .padding(.bottom, 8)
     }
@@ -288,7 +288,7 @@ struct TactileTabItem: View {
     let isSelected: Bool
     let action: () -> Void
 
-    private let ledge: CGFloat = 8
+    private let ledge: CGFloat = 6
     
     var body: some View {
         Button(action: action) {

@@ -299,9 +299,9 @@ struct TactileTabItem: View {
     .font(.system(size: 9, weight: isSelected ? .semibold : .regular))
     .shadow(
         color: isSelected ? .black.opacity(0.18) : .clear,
-        radius: 1,
+        radius: 0.5,
         x: 0,
-        y: 1
+        y: 0.5
     )
             }
             

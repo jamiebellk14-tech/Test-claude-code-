@@ -295,8 +295,14 @@ struct TactileTabItem: View {
             VStack(spacing: 3) {
                 Image(systemName: icon)
                     .font(.system(size: 17, weight: isSelected ? .bold : .medium))
-                Text(label)
-                    .font(.system(size: 9, weight: isSelected ? .semibold : .regular))
+               Text(label)
+    .font(.system(size: 9, weight: isSelected ? .semibold : .regular))
+    .shadow(
+        color: isSelected ? .black.opacity(0.18) : .clear,
+        radius: 1,
+        x: 0,
+        y: 1
+    )
             }
             
             .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.55))

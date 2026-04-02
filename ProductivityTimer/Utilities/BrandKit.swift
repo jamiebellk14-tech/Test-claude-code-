@@ -177,7 +177,7 @@ struct BrandNavBar: View {
             // Hard-ledge shadow makes the nav bar feel like a raised physical shelf
             Color(.systemBackground)
                 .ignoresSafeArea(edges: .top)
-                .shadow(color: Color(.label).opacity(0.13), radius: 0, x: 0, y: 1)
+                .shadow(color: Color(.label).opacity(0.13), radius: 0, x: 0, y: ledge)
 
             HStack(spacing: 0) {
                 Group {
@@ -300,7 +300,7 @@ struct TactileTabBar: View {
         .background {
             ZStack {
                 RoundedRectangle(cornerRadius: 20).fill(tabGreen)
-                RoundedRectangle(cornerRadius: 20).strokeBorder(Color.white.opacity(0.25), lineWidth: 0)
+                RoundedRectangle(cornerRadius: 20).strokeBorder(Color.white.opacity(0.25), lineWidth: 1)
             }
             .shadow(color: tabGreen.darkened(by: 0.55), radius: 0, x: 0, y: 6)
         }

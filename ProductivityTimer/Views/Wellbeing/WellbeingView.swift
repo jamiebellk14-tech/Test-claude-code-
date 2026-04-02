@@ -30,9 +30,7 @@ struct WellbeingView: View {
             WellbeingGoalSheet(vm: vm)
         }
         .onAppear {
-            vm.refreshAuthorizationStatus()
             vm.load(context: context)
-            vm.syncFromSharedContainer(context: context)
         }
     }
 

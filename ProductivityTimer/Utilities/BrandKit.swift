@@ -332,7 +332,7 @@ struct TactileTabItem: View {
             // Hard ledge on the background shape — collapses when pressed in (selected)
             .background {
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(isSelected ? Color.white.opacity(0.28) : Color.white.opacity(0.12))
+                    .fill(isSelected ? Color.white.opacity(0.28) : Color.white.opacity(0.04))
                     .shadow(
                         color: tabGreen.darkened(by: 0.6),
                         radius: 0,

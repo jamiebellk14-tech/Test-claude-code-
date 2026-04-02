@@ -177,7 +177,7 @@ struct BrandNavBar: View {
             // Hard-ledge shadow makes the nav bar feel like a raised physical shelf
             Color(.systemBackground)
                 .ignoresSafeArea(edges: .top)
-                .shadow(color: Color(.label).opacity(0.18), radius: 0, x: 0, y: ledge)
+                .shadow(color: Color(.label).opacity(0.13), radius: 0, x: 0, y: 1)
 
             HStack(spacing: 0) {
                 Group {

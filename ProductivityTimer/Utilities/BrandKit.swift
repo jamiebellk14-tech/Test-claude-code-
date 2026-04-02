@@ -288,10 +288,8 @@ struct TactileTabItem: View {
     let isSelected: Bool
     let action: () -> Void
 
-    private let ledge: CGFloat = 4
-    // Shadow colour = the dark-green "underside" ledge
-    private let ledgeShadow = Color(hex: "#00bf63").darkened(by: 0.45)
-
+    private let ledge: CGFloat = 3
+    
     var body: some View {
         Button(action: action) {
             VStack(spacing: 3) {
@@ -300,19 +298,16 @@ struct TactileTabItem: View {
                 Text(label)
                     .font(.system(size: 9, weight: isSelected ? .semibold : .regular))
             }
-            // Unselected = muted white; Selected = full bright white
+            
             .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.55))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 7)
-            // Selected gets a frosted white highlight patch
+            // Background-only fill - no shadow on text to avoid the double-text artefact
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(isSelected ? Color.white.opacity(0.22) : Color.clear)
+                    .fill(isSelected ? Color.white.opacity(0.22) : Color.white.opacity(0.07))
             )
-            .compositingGroup()
-            // Unselected = raised (dark-green ledge below); Selected = pressed in
-            .shadow(color: isSelected ? .clear : ledgeShadow,
-                    radius: 0, x: 0, y: isSelected ? 0 : ledge)
+           // Press-in : selected sinks down, unselected sits flush
             .offset(y: isSelected ? ledge : 0)
         }
         .buttonStyle(.plain)

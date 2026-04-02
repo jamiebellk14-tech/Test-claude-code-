@@ -310,8 +310,10 @@ struct TactileTabItem: View {
             .padding(.vertical, 7)
             // Background-only fill - no shadow on text to avoid the double-text artefact
             .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(isSelected ? Color.white.opacity(0.22) : Color.white.opacity(0.07))
+    RoundedRectangle(cornerRadius: 14)
+        .fill(isSelected ? Color.white.opacity(0.22) : Color.white.opacity(0.07))
+        .offset(y: isSelected ? 2 : 0)
+)
             )
            // Press-in : selected sinks down, unselected sits flush
             .offset(y: isSelected ? ledge : 0)

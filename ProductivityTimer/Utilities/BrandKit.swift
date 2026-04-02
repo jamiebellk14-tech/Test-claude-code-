@@ -273,10 +273,12 @@ struct TactileTabBar: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        // Solid brand green pill — same colour as nav bar
-        .background(tabGreen, in: RoundedRectangle(cornerRadius: 20))
-        // Dark-green drop shadow lifts the pill off the screen
-        .shadow(color: tabGreen.darkened(by: 0.50), radius: 0, x: 0, y: 5)
+        // Solid brand green pill — shadow applied to shape only (not text/icons)
+        .background {
+            RoundedRectangle(cornerRadius: 20)
+                .fill(tabGreen)
+                .shadow(color: tabGreen.darkened(by: 0.50), radius: 0, x: 0, y: 5)
+        }
         .padding(.horizontal, 20)
         .padding(.bottom, 8)
     }
@@ -290,32 +292,35 @@ struct TactileTabItem: View {
 
     private let ledge: CGFloat = 2
     
+    // ── Icon shadow (edit independently) ──────────────────────────────────────
+    private var iconShadowColor: Color  { .clear }
+    private var iconShadowRadius: CGFloat { 0 }
+    private var iconShadowX: CGFloat    { 0 }
+    private var iconShadowY: CGFloat    { 0 }
+
+    // ── Label shadow (edit independently) ─────────────────────────────────────
+    private var labelShadowColor: Color  { .clear }
+    private var labelShadowRadius: CGFloat { 0 }
+    private var labelShadowX: CGFloat    { 0 }
+    private var labelShadowY: CGFloat    { 0 }
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 3) {
                 Image(systemName: icon)
                     .font(.system(size: 17, weight: isSelected ? .bold : .medium))
-               Text(label)
-    .font(.system(size: 9, weight: isSelected ? .semibold : .regular))
-    .shadow(
-        color: isSelected ? .black.opacity(0.18) : .clear,
-        radius: 5,
-        x: 0,
-        y: 5
-    )
+                    .shadow(color: iconShadowColor, radius: iconShadowRadius, x: iconShadowX, y: iconShadowY)
+                Text(label)
+                    .font(.system(size: 9, weight: isSelected ? .semibold : .regular))
+                    .shadow(color: labelShadowColor, radius: labelShadowRadius, x: labelShadowX, y: labelShadowY)
             }
-            
             .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.55))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 7)
-            // Background-only fill - no shadow on text to avoid the double-text artefact
             .background(
-    RoundedRectangle(cornerRadius: 14)
-        .fill(isSelected ? Color.white.opacity(0.22) : Color.white.opacity(0.07))
-    
-)
-            
-           // Press-in : selected sinks down, unselected sits flush
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(isSelected ? Color.white.opacity(0.22) : Color.white.opacity(0.07))
+            )
             .offset(y: isSelected ? ledge : 0)
         }
         .buttonStyle(.plain)

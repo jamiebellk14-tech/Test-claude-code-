@@ -226,7 +226,7 @@ struct TactileNavButton: View {
     var shadowColor: Color    = Color(hex: "#00bf63").darkened(by: 0.45)
     var shadowRadius: CGFloat = 4        // blur radius
     var shadowX: CGFloat      = 0
-    var shadowY: CGFloat      = 3        // distance below button
+    var shadowY: CGFloat      = 5        // distance below button
 
     private let ledge: CGFloat = 2
 

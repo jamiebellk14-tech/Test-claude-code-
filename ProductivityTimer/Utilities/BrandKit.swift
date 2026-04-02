@@ -288,7 +288,7 @@ struct TactileTabItem: View {
     let isSelected: Bool
     let action: () -> Void
 
-    private let ledge: CGFloat = 4
+    private let ledge: CGFloat = 2
     
     var body: some View {
         Button(action: action) {
@@ -299,9 +299,9 @@ struct TactileTabItem: View {
     .font(.system(size: 9, weight: isSelected ? .semibold : .regular))
     .shadow(
         color: isSelected ? .black.opacity(0.18) : .clear,
-        radius: 0.0,
+        radius: 5,
         x: 0,
-        y: 0.0
+        y: 5
     )
             }
             

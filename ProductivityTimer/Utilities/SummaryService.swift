@@ -9,6 +9,7 @@ private extension DateFormatter {
     }()
 }
 
+@MainActor
 @Observable
 final class SummaryService {
     var summary: String = ""
@@ -37,24 +38,17 @@ final class SummaryService {
 
         let totalCompleted = tasks.filter { $0.endTime != nil }.count
         let prompt = buildSummaryPrompt(period: period, totalCompleted: totalCompleted, drains: drains)
-
-        await MainActor.run {
-            isLoading = true
-            errorMessage = ""
-            summary = ""
-        }
+        isLoading = true
+        errorMessage = ""
+        summary = ""
 
         do {
             let result = try await callClaude(messages: [["role": "user", "content": prompt]])
-            await MainActor.run {
-                summary = result
-                isLoading = false
-            }
+            summary = result
+            isLoading = false
         } catch {
-            await MainActor.run {
-                errorMessage = error.localizedDescription
-                isLoading = false
-            }
+            errorMessage = error.localizedDescription
+            isLoading = false
         }
     }
 
@@ -153,15 +147,16 @@ final class SummaryService {
 
         Rules:
         - Under 80 words for most replies. Be specific, not generic.
-        - When a data chart is shown to the user, give 1-2 sentence insight only — don't repeat the numbers.
-        - You can add tasks to the user's schedule. When asked, respond with a confirmation message and embed: {{SCHEDULE:[{"label":"...","minutes":N,"tag":"..."}]}}
-        - Tag names must match exactly from the Available tags list. If unsure, omit the tag field.
+        - When a data chart is shown to the user, give 1-2 sentence insight only.
+        - You can add tasks to the user's schedule. When asked, embed: {{SCHEDULE:[{"label":"...","minutes":N,"tag":"..."}]}}
+        - Tag names must match exactly from the Available tags list. If unsure, omit the tag.
         - Speak like a coach, not a chatbot.
+        - REPORT REQUESTS: If the user asks for a report, breakdown, or summary of their data, output ONLY the formatted data — no intro, no "Here's your report", no conclusion. Just the data.
 
         FORMATTING:
-        - Use **bold** for tag names, key numbers, and insights
-        - Blank line between each distinct point
-        - Use "——" on its own line before a key insight
+        - Each data point or section on its own line with a blank line between
+        - Use **bold** for tag names, key numbers, and key insights
+        - Use "——" on its own line before a closing insight
 
         TASK DATA SUMMARY
         Total completed: \(completed.count) | On time: \(onTime) (\(onTimePct)%) | Over estimate: \(overtime)

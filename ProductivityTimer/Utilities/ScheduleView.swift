@@ -26,6 +26,8 @@ struct ScheduleView: View {
                 }
             }
             .navigationTitle("Schedule")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { showAddSheet = true } label: {

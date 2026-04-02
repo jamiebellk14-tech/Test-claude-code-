@@ -27,16 +27,34 @@ struct ReportsView: View {
                     .tag(1)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
-            .navigationTitle(selectedPage == 0 ? "Reports" : "What Took Longer")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Picker("Page", selection: $selectedPage) {
-                        Text("Overview").tag(0)
-                        Text("Time Drains").tag(1)
+                    HStack(spacing: 0) {
+                        ForEach([(0, "Overview"), (1, "Time Drains")], id: \.0) { tag, label in
+                            let selected = selectedPage == tag
+                            Button {
+                                HapticManager.selection()
+                                withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+                                    selectedPage = tag
+                                }
+                            } label: {
+                                Text(label)
+                                    .font(.system(size: 13, weight: selected ? .semibold : .regular))
+                                    .foregroundStyle(selected ? .white : Color(.secondaryLabel))
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 7)
+                                    .background(
+                                        selected ? Color(hex: "#00bf63") : Color.clear,
+                                        in: Capsule()
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
-                    .pickerStyle(.segmented)
-                    .frame(width: 220)
+                    .padding(3)
+                    .background(Color(.secondarySystemBackground), in: Capsule())
                 }
             }
         }

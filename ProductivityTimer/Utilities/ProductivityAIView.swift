@@ -51,6 +51,7 @@ struct ProductivityAIView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     TaskMindLogo(fontSize: 20)
@@ -217,31 +218,30 @@ struct ProductivityAIView: View {
         messages.append(ChatMessage(role: "user", content: text))
         inputText = ""
         isLoading = true
-        let tagsCopy = Array(allTags)
-        Task {
+        // Snapshot history + build context on main actor before async work
+        let historySnapshot = Array(messages.dropLast())
+        let taskSnapshot = Array(allTasks)
+        let tagSnapshot = Array(allTags)
+        Task { @MainActor in
             do {
                 let reply = try await summaryService.chat(
-                    history: messages.dropLast(),
+                    history: historySnapshot,
                     newMessage: text,
-                    allTasks: allTasks,
-                    allTags: tagsCopy
+                    allTasks: taskSnapshot,
+                    allTags: tagSnapshot
                 )
-                await MainActor.run {
-                    let parsed = parseScheduleAction(from: reply)
-                    let cleanText = parsed?.cleanText ?? reply
-                    let newMsg = ChatMessage(role: "assistant", content: cleanText)
-                    messages.append(newMsg)
-                    if let drafts = parsed?.drafts, !drafts.isEmpty {
-                        pendingActions[newMsg.id] = drafts
-                    }
-                    isLoading = false
-                    startTypewriter(text: cleanText, id: newMsg.id)
+                let parsed = parseScheduleAction(from: reply)
+                let cleanText = parsed?.cleanText ?? reply
+                let newMsg = ChatMessage(role: "assistant", content: cleanText)
+                messages.append(newMsg)
+                if let drafts = parsed?.drafts, !drafts.isEmpty {
+                    pendingActions[newMsg.id] = drafts
                 }
+                isLoading = false
+                startTypewriter(text: cleanText, id: newMsg.id)
             } catch {
-                await MainActor.run {
-                    messages.append(ChatMessage(role: "assistant", content: "Sorry, I couldn't connect. Check your API key or internet connection.\n\n_\(error.localizedDescription)_"))
-                    isLoading = false
-                }
+                messages.append(ChatMessage(role: "assistant", content: "Sorry, I couldn't connect. Check your API key or internet.\n\n_\(error.localizedDescription)_"))
+                isLoading = false
             }
         }
     }
@@ -491,17 +491,26 @@ struct ChatBubble: View {
             .frame(maxWidth: showLiveCard ? .infinity : nil, alignment: .leading)
     }
 
-    // Normalise single newlines → paragraph breaks so markdown renders them
+    // Split into paragraphs so each gets its own Text — gives proper visual spacing
     @ViewBuilder
     private func markdownText(_ string: String) -> some View {
+        // Normalise: collapse 3+ newlines to 2, convert lone \n to double (paragraph break)
         let normalised = string
             .replacingOccurrences(of: "\n\n", with: "\u{FFFE}")
-            .replacingOccurrences(of: "\n", with: "\n\n")
+            .replacingOccurrences(of: "\n", with: " ")
             .replacingOccurrences(of: "\u{FFFE}", with: "\n\n")
-        if let attributed = try? AttributedString(markdown: normalised) {
-            Text(attributed)
-        } else {
-            Text(string)
+        let paragraphs = normalised
+            .components(separatedBy: "\n\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        VStack(alignment: .leading, spacing: 5) {
+            ForEach(paragraphs.indices, id: \.self) { i in
+                if let attributed = try? AttributedString(markdown: paragraphs[i]) {
+                    Text(attributed)
+                } else {
+                    Text(paragraphs[i])
+                }
+            }
         }
     }
 }

@@ -36,6 +36,8 @@ struct TagManagementView: View {
                 }
             }
             .navigationTitle("Tags")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {

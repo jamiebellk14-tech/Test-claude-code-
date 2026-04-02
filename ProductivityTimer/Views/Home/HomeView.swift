@@ -60,6 +60,7 @@ struct HomeView: View {
             }
             .scrollDismissesKeyboard(.immediately)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     TaskMindLogo(fontSize: 20)

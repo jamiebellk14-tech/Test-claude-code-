@@ -9,49 +9,51 @@ struct ContentView: View {
     @State private var selectedTab: Int = 0
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            // Tab 0: Home / Active Timer
-            Group {
-                if timerViewModel.isRunning {
-                    ActiveTimerView(timerViewModel: timerViewModel)
-                } else {
-                    HomeView(timerViewModel: timerViewModel)
-                }
-            }
-            .tabItem { Label("Timer", systemImage: "timer") }
-            .tag(0)
+        ZStack(alignment: .bottom) {
+            // All tab views rendered simultaneously — opacity-switched to preserve state
+            timerContent
+                .allowsHitTesting(selectedTab == 0)
+                .opacity(selectedTab == 0 ? 1 : 0)
 
-            // Tab 1: Reports
             ReportsView()
-                .tabItem { Label("Reports", systemImage: "chart.bar.fill") }
-                .tag(1)
+                .allowsHitTesting(selectedTab == 1)
+                .opacity(selectedTab == 1 ? 1 : 0)
 
-            // Tab 2: Schedule
             ScheduleView(timerViewModel: timerViewModel, selectedTab: $selectedTab)
-                .tabItem { Label("Schedule", systemImage: "list.bullet.clipboard") }
-                .tag(2)
+                .allowsHitTesting(selectedTab == 2)
+                .opacity(selectedTab == 2 ? 1 : 0)
 
-            // Tab 3: Tags
             TagManagementView()
-                .tabItem { Label("Tags", systemImage: "tag.fill") }
-                .tag(3)
+                .allowsHitTesting(selectedTab == 3)
+                .opacity(selectedTab == 3 ? 1 : 0)
 
-            // Tab 4: TaskMind AI
             ProductivityAIView()
-                .tabItem { Label("TaskMind", systemImage: "sparkles") }
-                .tag(4)
+                .allowsHitTesting(selectedTab == 4)
+                .opacity(selectedTab == 4 ? 1 : 0)
+
+            // Floating tactile tab bar
+            TactileTabBar(selectedTab: $selectedTab)
+        }
+        .safeAreaInset(edge: .bottom) {
+            // Reserve space so content isn't hidden behind the floating bar
+            Color.clear.frame(height: 90)
         }
         .tint(Color(hex: "#00bf63"))
-        .onChange(of: selectedTab) {
-            HapticManager.heavy()
-        }
-        // Restore any in-progress task if app is relaunched mid-task
         .onAppear {
             timerViewModel.restoreIfNeeded(from: allTasks)
         }
-        // Notification tap → just jump to the Timer tab
         .onReceive(NotificationCenter.default.publisher(for: .openCheckIn)) { _ in
             selectedTab = 0
+        }
+    }
+
+    private var timerContent: some View {
+        Group {
+            if timerViewModel.isRunning {
+                ActiveTimerView(timerViewModel: timerViewModel)
+            } else {
+                HomeView(timerViewModel: timerViewModel)
+            }
         }
     }
 }

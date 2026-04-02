@@ -4,17 +4,55 @@ import SwiftUI
 
 struct TaskMindLogo: View {
     var fontSize: CGFloat = 34
-    var onGreen: Bool = false   // true = both words white (for use on green bar)
+
+    // Standard (plain) logo — used outside the nav bar
+    var body: some View {
+        HStack(spacing: 0) {
+            Text("Task")
+                .font(.system(size: fontSize, weight: .bold))
+                .foregroundStyle(.primary)
+            Text("Mind")
+                .font(.system(size: fontSize, weight: .bold))
+                .foregroundStyle(Color(hex: "#00bf63"))
+        }
+    }
+}
+
+// MARK: - TaskMind Logo Badge
+// Tactile 3-D pill version used in the nav bar.
+// Same hard-ledge extrusion technique as TactileButtonStyle:
+//   face = green rounded rect; ledge = shadow(radius:0, y:ledge)
+// "Task" is white on green; "Mind" is black on green for contrast.
+
+struct TaskMindLogoBadge: View {
+    var fontSize: CGFloat = 18
+    private let green = Color(hex: "#00bf63")
+    private let ledge: CGFloat = 4
 
     var body: some View {
         HStack(spacing: 0) {
             Text("Task")
                 .font(.system(size: fontSize, weight: .bold))
-                .foregroundStyle(onGreen ? Color.white : Color.primary)
+                .foregroundStyle(.white)
             Text("Mind")
                 .font(.system(size: fontSize, weight: .bold))
-                .foregroundStyle(onGreen ? Color.white.opacity(0.75) : Color(hex: "#00bf63"))
+                .foregroundStyle(.black)
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+        .background {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(green)
+                // Inner border gives depth to the face
+                RoundedRectangle(cornerRadius: 10)
+                    .strokeBorder(Color.white.opacity(0.25), lineWidth: 1)
+            }
+        }
+        .compositingGroup()
+        // Hard-shadow ledge — zero blur = solid pixel-perfect extrusion
+        .shadow(color: green.darkened(), radius: 0, x: 0, y: ledge)
+        .padding(.bottom, ledge)
     }
 }
 
@@ -122,12 +160,11 @@ struct BrandNavBar: View {
         BrandNavBar(center: .custom(AnyView(view)), leading: leading, trailing: trailing)
     }
 
-    private let green = Color(hex: "#00bf63")
-
     var body: some View {
         ZStack(alignment: .bottom) {
-            // Solid brand green — extends behind status bar
-            green.ignoresSafeArea(edges: .top)
+            // App background — no coloured bar, just the tactile badge logo stands out
+            Color(.systemBackground)
+                .ignoresSafeArea(edges: .top)
 
             HStack(spacing: 0) {
                 Group {
@@ -139,9 +176,13 @@ struct BrandNavBar: View {
                 Spacer(minLength: 0)
 
                 switch center {
-                case .logo:          TaskMindLogo(fontSize: 20, onGreen: true)
-                case .title(let t):  Text(t).font(.system(size: 17, weight: .semibold))
-                case .custom(let v): v
+                case .logo:
+                    // Tactile 3-D badge replaces plain text logo
+                    TaskMindLogoBadge()
+                case .title(let t):
+                    Text(t).font(.system(size: 17, weight: .semibold))
+                case .custom(let v):
+                    v
                 }
 
                 Spacer(minLength: 0)
@@ -152,19 +193,12 @@ struct BrandNavBar: View {
                 }
                 .frame(width: 60, alignment: .trailing)
             }
-            // Everything on the green bar defaults to white
-            .foregroundStyle(.white)
             .padding(.horizontal, 8)
             .frame(height: 44)
             .padding(.bottom, 6)
         }
         .frame(height: 52)
-        // Subtle dark-green underline — like the ledge of the bar itself
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(green.darkened(by: 0.2))
-                .frame(height: 3)
-        }
+        // No underline — clean boundary with content below
     }
 }
 
@@ -179,12 +213,11 @@ struct TactileNavButton: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color(hex: "#00bf63"))
                 .frame(width: 36, height: 36)
-                // Frosted white circle — pops off the green bar
-                .background(Color.white.opacity(0.18), in: Circle())
+                .background(Color(hex: "#00bf63").opacity(0.12), in: Circle())
         }
         .buttonStyle(_NavLedgeStyle())
-        // inherits .white foregroundStyle from BrandNavBar container
     }
 }
 

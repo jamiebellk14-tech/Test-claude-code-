@@ -28,7 +28,6 @@ struct ReportsView: View {
     }
 
     private var pageToggle: some View {
-        // On the green nav bar: selected = white pill + green text; unselected = transparent + dim white
         let green = Color(hex: "#00bf63")
         return HStack(spacing: 0) {
             ForEach([(0, "Overview"), (1, "Time Drains")], id: \.0) { tag, label in
@@ -41,16 +40,16 @@ struct ReportsView: View {
                 } label: {
                     Text(label)
                         .font(.system(size: 13, weight: selected ? .semibold : .regular))
-                        .foregroundStyle(selected ? green : Color.white.opacity(0.65))
+                        .foregroundStyle(selected ? .white : Color(.secondaryLabel))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 7)
-                        .background(selected ? Color.white : Color.clear, in: Capsule())
+                        .background(selected ? green : Color.clear, in: Capsule())
                 }
                 .buttonStyle(.plain)
             }
         }
         .padding(3)
-        .background(green.darkened(by: 0.18), in: Capsule())
+        .background(Color(.secondarySystemBackground), in: Capsule())
     }
 
     // MARK: - Page 1: Overview

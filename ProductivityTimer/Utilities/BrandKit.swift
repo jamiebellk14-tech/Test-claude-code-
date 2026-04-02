@@ -288,7 +288,7 @@ struct TactileTabItem: View {
     let isSelected: Bool
     let action: () -> Void
 
-    private let ledge: CGFloat = 3
+    private let ledge: CGFloat = 0
     
     var body: some View {
         Button(action: action) {

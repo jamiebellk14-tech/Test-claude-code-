@@ -31,6 +31,10 @@ struct ContentView: View {
                 .allowsHitTesting(selectedTab == 4)
                 .opacity(selectedTab == 4 ? 1 : 0)
 
+            WellbeingView()
+                .allowsHitTesting(selectedTab == 5)
+                .opacity(selectedTab == 5 ? 1 : 0)
+
             // Floating tactile tab bar
             TactileTabBar(selectedTab: $selectedTab)
         }

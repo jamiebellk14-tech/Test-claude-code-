@@ -202,6 +202,70 @@ final class SummaryService {
         """
     }
 
+    // MARK: - Wellbeing coaching (flip-narrative, empowerment-first)
+
+    func generateWellbeingCoaching(
+        snapshot: WellbeingSnapshot,
+        yesterday: WellbeingSnapshot?,
+        goal: WellbeingGoal,
+        streak: Int
+    ) async {
+        isLoading = true
+        errorMessage = ""
+        summary = ""
+        let prompt = buildWellbeingPrompt(snapshot: snapshot, yesterday: yesterday, goal: goal, streak: streak)
+        do {
+            let result = try await callClaude(
+                messages: [["role": "user", "content": prompt]],
+                maxTokens: 120
+            )
+            summary = result
+            isLoading = false
+        } catch {
+            errorMessage = error.localizedDescription
+            isLoading = false
+        }
+    }
+
+    private func buildWellbeingPrompt(
+        snapshot: WellbeingSnapshot,
+        yesterday: WellbeingSnapshot?,
+        goal: WellbeingGoal,
+        streak: Int
+    ) -> String {
+        let pickupDelta: String
+        if let yest = yesterday {
+            let delta = snapshot.phonePickups - yest.phonePickups
+            if delta < 0 { pickupDelta = "\(abs(delta)) fewer than yesterday" }
+            else if delta > 0 { pickupDelta = "\(delta) more than yesterday" }
+            else { pickupDelta = "same as yesterday" }
+        } else {
+            pickupDelta = "no comparison yet"
+        }
+
+        let underGoal = snapshot.totalPhoneMinutes <= goal.dailyPhoneMinutesTarget
+        let overBy = max(0, snapshot.totalPhoneMinutes - goal.dailyPhoneMinutesTarget)
+
+        return """
+        You are TaskMind's wellbeing coach — warm, direct, never guilt-tripping.
+
+        Today's data:
+        - Phone-free time: \(snapshot.phoneFreeFormatted) (out of 16 waking hours)
+        - Screen time: \(snapshot.screenTimeFormatted) (goal: \(goal.targetFormatted))
+        - Phone pickups: \(snapshot.phonePickups) (\(pickupDelta))
+        - Productive focus time: \(snapshot.productiveMinutes)m across \(snapshot.tasksCompleted) tasks
+        - Under screen time goal: \(underGoal ? "yes" : "no — \(overBy)m over")
+        - Streak: \(streak) day(s) under goal
+
+        Rules:
+        - START with something empowering about what they DIDN'T do (phone-free time, pickups saved).
+        - Only mention the negative IF they exceeded their goal — frame it as "tomorrow we can aim for..." not "you failed".
+        - If streak >= 3, celebrate it: "That's X days in a row."
+        - Under 60 words. No bullet points. No opener like "Great job!" — start straight with the insight.
+        - Plain prose only.
+        """
+    }
+
     private func callClaude(
         messages: [[String: String]],
         system: String? = nil,

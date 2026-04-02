@@ -35,6 +35,13 @@
 		FB000000000000000000001A /* ScheduledTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA000000000000000000001A /* ScheduledTask.swift */; };
 		FB000000000000000000001B /* ScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA000000000000000000001B /* ScheduleView.swift */; };
 		FB000000000000000000001C /* BrandKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA000000000000000000001C /* BrandKit.swift */; };
+		FB000000000000000000001D /* WellbeingSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA000000000000000000001D /* WellbeingSnapshot.swift */; };
+		FB000000000000000000001E /* WellbeingGoal.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA000000000000000000001E /* WellbeingGoal.swift */; };
+		FB000000000000000000001F /* WellbeingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA000000000000000000001F /* WellbeingViewModel.swift */; };
+		FB0000000000000000000020 /* WellbeingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000020 /* WellbeingView.swift */; };
+		FB0000000000000000000021 /* WellbeingTodayPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000021 /* WellbeingTodayPage.swift */; };
+		FB0000000000000000000022 /* WellbeingTrendsPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000022 /* WellbeingTrendsPage.swift */; };
+		FB0000000000000000000023 /* WellbeingGoalSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0000000000000000000023 /* WellbeingGoalSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -65,6 +72,13 @@
 		FA000000000000000000001A /* ScheduledTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduledTask.swift; sourceTree = "<group>"; };
 		FA000000000000000000001B /* ScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleView.swift; sourceTree = "<group>"; };
 		FA000000000000000000001C /* BrandKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandKit.swift; sourceTree = "<group>"; };
+		FA000000000000000000001D /* WellbeingSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WellbeingSnapshot.swift; sourceTree = "<group>"; };
+		FA000000000000000000001E /* WellbeingGoal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WellbeingGoal.swift; sourceTree = "<group>"; };
+		FA000000000000000000001F /* WellbeingViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WellbeingViewModel.swift; sourceTree = "<group>"; };
+		FA0000000000000000000020 /* WellbeingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WellbeingView.swift; sourceTree = "<group>"; };
+		FA0000000000000000000021 /* WellbeingTodayPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WellbeingTodayPage.swift; sourceTree = "<group>"; };
+		FA0000000000000000000022 /* WellbeingTrendsPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WellbeingTrendsPage.swift; sourceTree = "<group>"; };
+		FA0000000000000000000023 /* WellbeingGoalSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WellbeingGoalSheet.swift; sourceTree = "<group>"; };
 		FA0000000000000000000017 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FA0000000000000000000099 /* ProductivityTimer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProductivityTimer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -109,6 +123,8 @@
 				FA0000000000000000000004 /* TaskEntry.swift */,
 				FA0000000000000000000005 /* TaskUpdate.swift */,
 				FA000000000000000000001A /* ScheduledTask.swift */,
+				FA000000000000000000001D /* WellbeingSnapshot.swift */,
+				FA000000000000000000001E /* WellbeingGoal.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -119,6 +135,7 @@
 				FA0000000000000000000006 /* TimerViewModel.swift */,
 				FA0000000000000000000007 /* ReportsViewModel.swift */,
 				FA0000000000000000000008 /* TagViewModel.swift */,
+				FA000000000000000000001F /* WellbeingViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -132,6 +149,7 @@
 				FG0000000000000000000008 /* Update */,
 				FG0000000000000000000009 /* Reports */,
 				FG000000000000000000000A /* Tags */,
+				FG000000000000000000000D /* Wellbeing */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -193,6 +211,17 @@
 				FA000000000000000000001C /* BrandKit.swift */,
 			);
 			path = Utilities;
+			sourceTree = "<group>";
+		};
+		FG000000000000000000000D /* Wellbeing */ = {
+			isa = PBXGroup;
+			children = (
+				FA0000000000000000000020 /* WellbeingView.swift */,
+				FA0000000000000000000021 /* WellbeingTodayPage.swift */,
+				FA0000000000000000000022 /* WellbeingTrendsPage.swift */,
+				FA0000000000000000000023 /* WellbeingGoalSheet.swift */,
+			);
+			path = Wellbeing;
 			sourceTree = "<group>";
 		};
 		FG000000000000000000000C /* Products */ = {
@@ -299,6 +328,13 @@
 				FB0000000000000000000019 /* ProductivityAIView.swift in Sources */,
 				FB000000000000000000001B /* ScheduleView.swift in Sources */,
 				FB000000000000000000001C /* BrandKit.swift in Sources */,
+				FB000000000000000000001D /* WellbeingSnapshot.swift in Sources */,
+				FB000000000000000000001E /* WellbeingGoal.swift in Sources */,
+				FB000000000000000000001F /* WellbeingViewModel.swift in Sources */,
+				FB0000000000000000000020 /* WellbeingView.swift in Sources */,
+				FB0000000000000000000021 /* WellbeingTodayPage.swift in Sources */,
+				FB0000000000000000000022 /* WellbeingTrendsPage.swift in Sources */,
+				FB0000000000000000000023 /* WellbeingGoalSheet.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -433,6 +469,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				CODE_SIGN_ENTITLEMENTS = ProductivityTimer/ProductivityTimer.entitlements;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.personal.productivitytimer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -460,6 +497,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				CODE_SIGN_ENTITLEMENTS = ProductivityTimer/ProductivityTimer.entitlements;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.personal.productivitytimer;
 				PRODUCT_NAME = "$(TARGET_NAME)";

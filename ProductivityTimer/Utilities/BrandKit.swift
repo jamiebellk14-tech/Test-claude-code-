@@ -278,6 +278,7 @@ struct TactileTabBar: View {
         TabItem(index: 2, icon: "list.bullet.clipboard.fill", label: "Schedule"),
         TabItem(index: 3, icon: "tag.fill",                   label: "Tags"),
         TabItem(index: 4, icon: "sparkles",                   label: "TaskMind"),
+        TabItem(index: 5, icon: "figure.mind.and.body",       label: "Wellbeing"),
     ]
 
     var body: some View {

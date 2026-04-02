@@ -300,7 +300,7 @@ struct TactileTabBar: View {
         .background {
             ZStack {
                 RoundedRectangle(cornerRadius: 20).fill(tabGreen)
-                RoundedRectangle(cornerRadius: 20).strokeBorder(Color.white.opacity(0.25), lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: 20).strokeBorder(Color.white.opacity(0.25), lineWidth: 0)
             }
             .shadow(color: tabGreen.darkened(by: 0.55), radius: 0, x: 0, y: 6)
         }

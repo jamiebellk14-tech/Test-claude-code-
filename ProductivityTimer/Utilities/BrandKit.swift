@@ -293,16 +293,16 @@ struct TactileTabItem: View {
     private let ledge: CGFloat = 2
     
     // ── Icon shadow (edit independently) ──────────────────────────────────────
-    private var iconShadowColor: Color  { .clear }
+    private var iconShadowColor: Color  { .black.opacity(0.3) }
     private var iconShadowRadius: CGFloat { 0 }
     private var iconShadowX: CGFloat    { 0 }
-    private var iconShadowY: CGFloat    { 0 }
+    private var iconShadowY: CGFloat    { 1 }
 
     // ── Label shadow (edit independently) ─────────────────────────────────────
     private var labelShadowColor: Color  { .black.opacity(0.3) }
-    private var labelShadowRadius: CGFloat { 0 }
+    private var labelShadowRadius: CGFloat { 4 }
     private var labelShadowX: CGFloat    { 0 }
-    private var labelShadowY: CGFloat    { 0.8 }
+    private var labelShadowY: CGFloat    { 1 }
 
     var body: some View {
         Button(action: action) {

@@ -302,7 +302,7 @@ struct TactileTabItem: View {
     private var labelShadowColor: Color  { .black.opacity(0.3) }
     private var labelShadowRadius: CGFloat { 0 }
     private var labelShadowX: CGFloat    { 0 }
-    private var labelShadowY: CGFloat    { 0.5 }
+    private var labelShadowY: CGFloat    { 0.8 }
 
     var body: some View {
         Button(action: action) {

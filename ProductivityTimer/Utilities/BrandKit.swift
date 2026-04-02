@@ -274,7 +274,7 @@ struct TactileTabBar: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         // Solid brand green pill — same colour as nav bar
-        .background(tabGreen, in: RoundedRectangle(cornerRadius: 15))
+        .background(tabGreen, in: RoundedRectangle(cornerRadius: 20))
         // Dark-green drop shadow lifts the pill off the screen
         .shadow(color: tabGreen.darkened(by: 0.50), radius: 0, x: 0, y: 5)
         .padding(.horizontal, 20)
@@ -288,7 +288,7 @@ struct TactileTabItem: View {
     let isSelected: Bool
     let action: () -> Void
 
-    private let ledge: CGFloat = 6
+    private let ledge: CGFloat = 4
     
     var body: some View {
         Button(action: action) {
@@ -312,7 +312,7 @@ struct TactileTabItem: View {
             .background(
     RoundedRectangle(cornerRadius: 14)
         .fill(isSelected ? Color.white.opacity(0.22) : Color.white.opacity(0.07))
-        .offset(y: isSelected ? 2 : 0)
+    
 )
             
            // Press-in : selected sinks down, unselected sits flush

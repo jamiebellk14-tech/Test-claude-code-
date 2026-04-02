@@ -18,7 +18,7 @@ struct TagManagementView: View {
                         withAnimation { editMode = editMode == .active ? .inactive : .active }
                     }
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(Color(hex: "#00bf63"))
+                    // foregroundStyle = .white inherited from BrandNavBar container
                     .padding(.leading, 4)
                 ),
                 trailing: AnyView(

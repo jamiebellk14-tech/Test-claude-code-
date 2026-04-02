@@ -74,8 +74,9 @@ struct ProductivityAIView: View {
         } label: {
             Image(systemName: "ellipsis.circle")
                 .font(.system(size: 17))
-                .foregroundStyle(Color(hex: "#00bf63"))
+                // foregroundStyle inherited as .white from BrandNavBar container
                 .frame(width: 36, height: 36)
+                .background(Color.white.opacity(0.18), in: Circle())
         }
     }
 

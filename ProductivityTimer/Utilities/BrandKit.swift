@@ -4,15 +4,16 @@ import SwiftUI
 
 struct TaskMindLogo: View {
     var fontSize: CGFloat = 34
+    var onGreen: Bool = false   // true = both words white (for use on green bar)
 
     var body: some View {
         HStack(spacing: 0) {
             Text("Task")
                 .font(.system(size: fontSize, weight: .bold))
-                .foregroundStyle(.primary)
+                .foregroundStyle(onGreen ? Color.white : Color.primary)
             Text("Mind")
                 .font(.system(size: fontSize, weight: .bold))
-                .foregroundStyle(Color(hex: "#00bf63"))
+                .foregroundStyle(onGreen ? Color.white.opacity(0.75) : Color(hex: "#00bf63"))
         }
     }
 }
@@ -121,16 +122,14 @@ struct BrandNavBar: View {
         BrandNavBar(center: .custom(AnyView(view)), leading: leading, trailing: trailing)
     }
 
+    private let green = Color(hex: "#00bf63")
+
     var body: some View {
         ZStack(alignment: .bottom) {
-            // Glass background — extends up behind status bar
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .overlay(Rectangle().fill(Color.white.opacity(0.04)))
-                .ignoresSafeArea(edges: .top)
+            // Solid brand green — extends behind status bar
+            green.ignoresSafeArea(edges: .top)
 
             HStack(spacing: 0) {
-                // Leading slot — always 60 pts wide so center is always truly centred
                 Group {
                     if let leading { leading }
                     else { Color.clear }
@@ -139,55 +138,68 @@ struct BrandNavBar: View {
 
                 Spacer(minLength: 0)
 
-                // Center
                 switch center {
-                case .logo:            TaskMindLogo(fontSize: 20)
-                case .title(let t):    Text(t).font(.system(size: 17, weight: .semibold))
-                case .custom(let v):   v
+                case .logo:          TaskMindLogo(fontSize: 20, onGreen: true)
+                case .title(let t):  Text(t).font(.system(size: 17, weight: .semibold))
+                case .custom(let v): v
                 }
 
                 Spacer(minLength: 0)
 
-                // Trailing slot
                 Group {
                     if let trailing { trailing }
                     else { Color.clear }
                 }
                 .frame(width: 60, alignment: .trailing)
             }
+            // Everything on the green bar defaults to white
+            .foregroundStyle(.white)
             .padding(.horizontal, 8)
             .frame(height: 44)
             .padding(.bottom, 6)
         }
         .frame(height: 52)
-        // Hairline separator
+        // Subtle dark-green underline — like the ledge of the bar itself
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color.white.opacity(0.09))
-                .frame(height: 0.5)
+                .fill(green.darkened(by: 0.2))
+                .frame(height: 3)
         }
     }
 }
 
 // MARK: - Tactile Nav Button
-// Small round button used in BrandNavBar (matches tactile ledge style, smaller scale)
+// Sits on the green BrandNavBar. White icon, dark-green hard-shadow ledge on press.
 
 struct TactileNavButton: View {
     let icon: String
     let action: () -> Void
-    var color: Color = Color(hex: "#00bf63")
-    private let ledge: CGFloat = 3
 
     var body: some View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(color)
                 .frame(width: 36, height: 36)
-                .background(color.opacity(0.12), in: Circle())
-                .compositingGroup()
+                // Frosted white circle — pops off the green bar
+                .background(Color.white.opacity(0.18), in: Circle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(_NavLedgeStyle())
+        // inherits .white foregroundStyle from BrandNavBar container
+    }
+}
+
+private struct _NavLedgeStyle: ButtonStyle {
+    private let ledge: CGFloat = 3
+    private let shadowColor = Color(hex: "#00bf63").darkened(by: 0.45)
+
+    func makeBody(configuration: Configuration) -> some View {
+        let pressed = configuration.isPressed
+        return configuration.label
+            .compositingGroup()
+            .shadow(color: shadowColor, radius: 0, x: 0, y: pressed ? 0 : ledge)
+            .offset(y: pressed ? ledge : 0)
+            .padding(.bottom, ledge)
+            .animation(.spring(response: 0.18, dampingFraction: 0.7), value: pressed)
     }
 }
 
@@ -228,15 +240,10 @@ struct TactileTabBar: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 26)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 26)
-                        .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
-                )
-        )
-        .shadow(color: .black.opacity(0.28), radius: 20, x: 0, y: 8)
+        // Solid brand green pill — same colour as nav bar
+        .background(tabGreen, in: RoundedRectangle(cornerRadius: 26))
+        // Dark-green drop shadow lifts the pill off the screen
+        .shadow(color: tabGreen.darkened(by: 0.55), radius: 0, x: 0, y: 6)
         .padding(.horizontal, 20)
         .padding(.bottom, 8)
     }
@@ -248,7 +255,9 @@ struct TactileTabItem: View {
     let isSelected: Bool
     let action: () -> Void
 
-    private let ledge: CGFloat = 3
+    private let ledge: CGFloat = 4
+    // Shadow colour = the dark-green "underside" ledge
+    private let ledgeShadow = Color(hex: "#00bf63").darkened(by: 0.45)
 
     var body: some View {
         Button(action: action) {
@@ -258,18 +267,19 @@ struct TactileTabItem: View {
                 Text(label)
                     .font(.system(size: 9, weight: isSelected ? .semibold : .regular))
             }
-            .foregroundStyle(isSelected ? tabGreen : Color(.secondaryLabel))
+            // Unselected = muted white; Selected = full bright white
+            .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.55))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 7)
+            // Selected gets a frosted white highlight patch
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(isSelected ? tabGreen.opacity(0.14) : Color.clear)
+                    .fill(isSelected ? Color.white.opacity(0.22) : Color.clear)
             )
             .compositingGroup()
-            .shadow(
-                color: isSelected ? .clear : Color.black.opacity(0.4),
-                radius: 0, x: 0, y: isSelected ? 0 : ledge
-            )
+            // Unselected = raised (dark-green ledge below); Selected = pressed in
+            .shadow(color: isSelected ? .clear : ledgeShadow,
+                    radius: 0, x: 0, y: isSelected ? 0 : ledge)
             .offset(y: isSelected ? ledge : 0)
         }
         .buttonStyle(.plain)

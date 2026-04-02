@@ -314,7 +314,7 @@ struct TactileTabItem: View {
         .fill(isSelected ? Color.white.opacity(0.22) : Color.white.opacity(0.07))
         .offset(y: isSelected ? 2 : 0)
 )
-            )
+            
            // Press-in : selected sinks down, unselected sits flush
             .offset(y: isSelected ? ledge : 0)
         }

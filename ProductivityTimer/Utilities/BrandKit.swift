@@ -94,6 +94,103 @@ struct TactileSendButtonStyle: ButtonStyle {
     }
 }
 
+// MARK: - Brand Nav Bar
+//
+// Fully custom navigation bar — no UIKit/NavigationStack chrome whatsoever.
+// Background extends behind the status bar via .ignoresSafeArea(edges: .top).
+
+struct BrandNavBar: View {
+    enum Center {
+        case logo
+        case title(String)
+        case custom(AnyView)
+    }
+
+    let center: Center
+    var leading: AnyView?
+    var trailing: AnyView?
+
+    // Convenience initialisers
+    static func logo(leading: AnyView? = nil, trailing: AnyView? = nil) -> BrandNavBar {
+        BrandNavBar(center: .logo, leading: leading, trailing: trailing)
+    }
+    static func titled(_ title: String, leading: AnyView? = nil, trailing: AnyView? = nil) -> BrandNavBar {
+        BrandNavBar(center: .title(title), leading: leading, trailing: trailing)
+    }
+    static func custom(_ view: some View, leading: AnyView? = nil, trailing: AnyView? = nil) -> BrandNavBar {
+        BrandNavBar(center: .custom(AnyView(view)), leading: leading, trailing: trailing)
+    }
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            // Glass background — extends up behind status bar
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .overlay(Rectangle().fill(Color.white.opacity(0.04)))
+                .ignoresSafeArea(edges: .top)
+
+            HStack(spacing: 0) {
+                // Leading slot — always 60 pts wide so center is always truly centred
+                Group {
+                    if let leading { leading }
+                    else { Color.clear }
+                }
+                .frame(width: 60, alignment: .leading)
+
+                Spacer(minLength: 0)
+
+                // Center
+                switch center {
+                case .logo:            TaskMindLogo(fontSize: 20)
+                case .title(let t):    Text(t).font(.system(size: 17, weight: .semibold))
+                case .custom(let v):   v
+                }
+
+                Spacer(minLength: 0)
+
+                // Trailing slot
+                Group {
+                    if let trailing { trailing }
+                    else { Color.clear }
+                }
+                .frame(width: 60, alignment: .trailing)
+            }
+            .padding(.horizontal, 8)
+            .frame(height: 44)
+            .padding(.bottom, 6)
+        }
+        .frame(height: 52)
+        // Hairline separator
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.white.opacity(0.09))
+                .frame(height: 0.5)
+        }
+    }
+}
+
+// MARK: - Tactile Nav Button
+// Small round button used in BrandNavBar (matches tactile ledge style, smaller scale)
+
+struct TactileNavButton: View {
+    let icon: String
+    let action: () -> Void
+    var color: Color = Color(hex: "#00bf63")
+    private let ledge: CGFloat = 3
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(color)
+                .frame(width: 36, height: 36)
+                .background(color.opacity(0.12), in: Circle())
+                .compositingGroup()
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 // MARK: - Tactile Tab Bar
 
 private let tabGreen = Color(hex: "#00bf63")

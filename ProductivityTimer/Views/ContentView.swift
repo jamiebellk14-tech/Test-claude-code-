@@ -34,10 +34,6 @@ struct ContentView: View {
             // Floating tactile tab bar
             TactileTabBar(selectedTab: $selectedTab)
         }
-        .safeAreaInset(edge: .bottom) {
-            // Reserve space so content isn't hidden behind the floating bar
-            Color.clear.frame(height: 90)
-        }
         .tint(Color(hex: "#00bf63"))
         .onAppear {
             timerViewModel.restoreIfNeeded(from: allTasks)

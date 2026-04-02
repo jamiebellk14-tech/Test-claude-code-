@@ -16,48 +16,39 @@ struct ReportsView: View {
     @Environment(\.modelContext) private var context
 
     var body: some View {
-        NavigationStack {
-            TabView(selection: $selectedPage) {
-                // Page 1 — Overview
-                overviewPage
-                    .tag(0)
+        VStack(spacing: 0) {
+            BrandNavBar.custom(pageToggle)
 
-                // Page 2 — What took longer
-                timeDrainsPage
-                    .tag(1)
+            TabView(selection: $selectedPage) {
+                overviewPage.tag(0)
+                timeDrainsPage.tag(1)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    HStack(spacing: 0) {
-                        ForEach([(0, "Overview"), (1, "Time Drains")], id: \.0) { tag, label in
-                            let selected = selectedPage == tag
-                            Button {
-                                HapticManager.selection()
-                                withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
-                                    selectedPage = tag
-                                }
-                            } label: {
-                                Text(label)
-                                    .font(.system(size: 13, weight: selected ? .semibold : .regular))
-                                    .foregroundStyle(selected ? .white : Color(.secondaryLabel))
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 7)
-                                    .background(
-                                        selected ? Color(hex: "#00bf63") : Color.clear,
-                                        in: Capsule()
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                        }
+        }
+    }
+
+    private var pageToggle: some View {
+        HStack(spacing: 0) {
+            ForEach([(0, "Overview"), (1, "Time Drains")], id: \.0) { tag, label in
+                let selected = selectedPage == tag
+                Button {
+                    HapticManager.selection()
+                    withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
+                        selectedPage = tag
                     }
-                    .padding(3)
-                    .background(Color(.secondarySystemBackground), in: Capsule())
+                } label: {
+                    Text(label)
+                        .font(.system(size: 13, weight: selected ? .semibold : .regular))
+                        .foregroundStyle(selected ? .white : Color(.secondaryLabel))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(selected ? Color(hex: "#00bf63") : Color.clear, in: Capsule())
                 }
+                .buttonStyle(.plain)
             }
         }
+        .padding(3)
+        .background(Color(.secondarySystemBackground), in: Capsule())
     }
 
     // MARK: - Page 1: Overview
@@ -143,6 +134,7 @@ struct ReportsView: View {
                 }
             }
         }
+        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 80) }
     }
 
     // MARK: - Page 2: What took longer
@@ -240,6 +232,7 @@ struct ReportsView: View {
                 }
             }
         }
+        .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 80) }
     }
 
     // MARK: - AI Summary

@@ -13,7 +13,9 @@ struct HomeView: View {
     @State private var showValidationError = false
 
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            BrandNavBar.logo()
+
             Form {
                 Section("What are you working on?") {
                     AnimatedPlaceholderTextField(text: $taskLabel)
@@ -59,13 +61,7 @@ struct HomeView: View {
                 }
             }
             .scrollDismissesKeyboard(.immediately)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    TaskMindLogo(fontSize: 20)
-                }
-            }
+            .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 80) }
             .task {
                 await NotificationManager.shared.requestAuthorization()
             }

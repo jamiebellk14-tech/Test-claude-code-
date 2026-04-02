@@ -5,11 +5,27 @@ struct TagManagementView: View {
     @Query(sort: \Tag.name) private var tags: [Tag]
     @Environment(\.modelContext) private var context
     @State private var showAddSheet = false
+    @State private var editMode: EditMode = .inactive
 
     private let tagVM = TagViewModel()
 
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            BrandNavBar.titled(
+                "Tags",
+                leading: AnyView(
+                    Button(editMode == .active ? "Done" : "Edit") {
+                        withAnimation { editMode = editMode == .active ? .inactive : .active }
+                    }
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Color(hex: "#00bf63"))
+                    .padding(.leading, 4)
+                ),
+                trailing: AnyView(
+                    TactileNavButton(icon: "plus") { showAddSheet = true }
+                )
+            )
+
             List {
                 ForEach(tags) { tag in
                     HStack(spacing: 12) {
@@ -35,24 +51,11 @@ struct TagManagementView: View {
                     }
                 }
             }
-            .navigationTitle("Tags")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showAddSheet = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                }
-                ToolbarItem(placement: .navigationBarLeading) {
-                    EditButton()
-                }
-            }
-            .sheet(isPresented: $showAddSheet) {
-                TagFormView()
-            }
+            .environment(\.editMode, $editMode)
+            .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 80) }
+        }
+        .sheet(isPresented: $showAddSheet) {
+            TagFormView()
         }
     }
 }

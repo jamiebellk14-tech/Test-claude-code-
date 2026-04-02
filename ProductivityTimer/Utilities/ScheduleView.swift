@@ -13,34 +13,28 @@ struct ScheduleView: View {
     @State private var editingTask: ScheduledTask? = nil
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if scheduledTasks.isEmpty {
-                    emptyState
-                } else {
-                    List {
-                        ForEach(scheduledTasks) { task in
-                            scheduledRow(task)
-                        }
+        VStack(spacing: 0) {
+            BrandNavBar.titled(
+                "Schedule",
+                trailing: AnyView(TactileNavButton(icon: "plus") { showAddSheet = true })
+            )
+
+            if scheduledTasks.isEmpty {
+                emptyState
+            } else {
+                List {
+                    ForEach(scheduledTasks) { task in
+                        scheduledRow(task)
                     }
                 }
+                .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 80) }
             }
-            .navigationTitle("Schedule")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button { showAddSheet = true } label: {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
-            .sheet(isPresented: $showAddSheet) {
-                ScheduledTaskFormView(existingTask: nil, tags: tags)
-            }
-            .sheet(item: $editingTask) { task in
-                ScheduledTaskFormView(existingTask: task, tags: tags)
-            }
+        }
+        .sheet(isPresented: $showAddSheet) {
+            ScheduledTaskFormView(existingTask: nil, tags: tags)
+        }
+        .sheet(item: $editingTask) { task in
+            ScheduledTaskFormView(existingTask: task, tags: tags)
         }
     }
 

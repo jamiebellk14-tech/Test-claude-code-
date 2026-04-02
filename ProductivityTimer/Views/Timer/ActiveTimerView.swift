@@ -16,7 +16,8 @@ struct ActiveTimerView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            BrandNavBar.titled("Timer Running")
             Form {
                 // Timer content
                 Section {
@@ -123,9 +124,8 @@ struct ActiveTimerView: View {
                     .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
                 }
             }
-            .navigationTitle("Timer Running")
-            .navigationBarTitleDisplayMode(.inline)
             .scrollDismissesKeyboard(.interactively)
+            .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 80) }
         }
     }
 }

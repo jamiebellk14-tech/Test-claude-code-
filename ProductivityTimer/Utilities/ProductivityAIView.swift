@@ -41,39 +41,41 @@ struct ProductivityAIView: View {
     ]
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                if !summaryService.hasAPIKey {
-                    apiKeyPrompt
-                } else {
-                    chatArea
+        VStack(spacing: 0) {
+            BrandNavBar.logo(
+                trailing: summaryService.hasAPIKey ? AnyView(menuButton) : nil
+            )
+
+            if !summaryService.hasAPIKey {
+                apiKeyPrompt
+            } else {
+                chatArea
+                // Input bar + opaque zone that sits behind the floating tab bar
+                VStack(spacing: 0) {
                     inputBar
+                    Color.clear.frame(height: 80)
                 }
+                .background(.bar)
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    TaskMindLogo(fontSize: 20)
-                }
-                if summaryService.hasAPIKey {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Menu {
-                            Button("Clear chat", role: .destructive) {
-                                messages = []
-                                pendingActions = [:]
-                            }
-                            Button("Change API key") {
-                                apiKeyDraft = summaryService.apiKey
-                                showAPIKeySheet = true
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                        }
-                    }
-                }
+        }
+        .sheet(isPresented: $showAPIKeySheet) { apiKeySheet }
+    }
+
+    private var menuButton: some View {
+        Menu {
+            Button("Clear chat", role: .destructive) {
+                messages = []
+                pendingActions = [:]
             }
-            .sheet(isPresented: $showAPIKeySheet) { apiKeySheet }
+            Button("Change API key") {
+                apiKeyDraft = summaryService.apiKey
+                showAPIKeySheet = true
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .font(.system(size: 17))
+                .foregroundStyle(Color(hex: "#00bf63"))
+                .frame(width: 36, height: 36)
         }
     }
 
@@ -202,7 +204,6 @@ struct ProductivityAIView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(.bar)
     }
 
     private var canSend: Bool {

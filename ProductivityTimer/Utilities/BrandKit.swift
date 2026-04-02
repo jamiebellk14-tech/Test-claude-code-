@@ -174,10 +174,10 @@ struct BrandNavBar: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            // Hard-ledge shadow makes the nav bar feel like a raised physical shelf
+            // Soft drop shadow lifts the nav bar off the content below
             Color(.systemBackground)
                 .ignoresSafeArea(edges: .top)
-                .shadow(color: Color(.label).opacity(0.13), radius: 0, x: 0, y: ledge)
+                .shadow(color: Color(.label).opacity(0.10), radius: 6, x: 0, y: 3)
 
             HStack(spacing: 0) {
                 Group {
@@ -331,18 +331,14 @@ struct TactileTabItem: View {
             .padding(.vertical, 7)
             // Hard ledge on the background shape — collapses when pressed in (selected)
             .background {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(isSelected ? Color.white.opacity(0.22) : Color.white.opacity(0.07))
-                    RoundedRectangle(cornerRadius: 14)
-                        .strokeBorder(Color.white.opacity(0.25), lineWidth: 0)
-                }
-                .shadow(
-                    color: tabGreen.darkened(by: 0.55),
-                    radius: 0,
-                    x: 0,
-                    y: isSelected ? 0 : ledge
-                )
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(isSelected ? Color.white.opacity(0.28) : Color.white.opacity(0.12))
+                    .shadow(
+                        color: tabGreen.darkened(by: 0.6),
+                        radius: 0,
+                        x: 0,
+                        y: isSelected ? 0 : ledge
+                    )
             }
             .offset(y: isSelected ? ledge : 0)      // face sinks down to meet the ledge
             .padding(.bottom, ledge)                 // reserve space so ledge shadow is visible

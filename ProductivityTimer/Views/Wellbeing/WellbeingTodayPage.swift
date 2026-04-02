@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import FamilyControls
 
 private let green = Color(hex: "#00bf63")
 private let orange = Color(hex: "#FF8C00")
@@ -13,12 +12,6 @@ struct WellbeingTodayPage: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                // Authorization gate
-                if vm.authorizationStatus != .approved {
-                    AuthorizationCard(vm: vm)
-                }
-
-                // Hero flip card
                 if let snap = vm.todaySnapshot {
                     HeroFlipCard(snapshot: snap, vm: vm)
                     PickupsComparisonCard(snapshot: snap, vm: vm)
@@ -32,33 +25,6 @@ struct WellbeingTodayPage: View {
             .padding(.horizontal, 16)
             .padding(.top, 12)
         }
-    }
-}
-
-// MARK: - Authorization Card
-
-private struct AuthorizationCard: View {
-    var vm: WellbeingViewModel
-
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "figure.mind.and.body")
-                .font(.system(size: 36, weight: .medium))
-                .foregroundStyle(green)
-            Text("Connect Screen Time")
-                .font(.system(size: 17, weight: .bold))
-            Text("TaskMind reads your Screen Time data to show how much time you're saving — automatically, no manual entry.")
-                .font(.system(size: 14))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            Button("Grant Access") {
-                Task { await vm.authorize() }
-            }
-            .buttonStyle(TactileButtonStyle())
-            .padding(.top, 4)
-        }
-        .padding(20)
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
     }
 }
 

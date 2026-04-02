@@ -1,116 +1,45 @@
 import SwiftUI
 import SwiftData
-import FamilyControls
-import DeviceActivity
 
 @MainActor
 @Observable
 final class WellbeingViewModel {
 
     // MARK: - State
-
-    var authorizationStatus: AuthorizationStatus = .notDetermined
     var todaySnapshot: WellbeingSnapshot?
-    var goal: WellbeingGoal?
     var yesterdaySnapshot: WellbeingSnapshot?
     var last7: [WellbeingSnapshot] = []
+    var goal: WellbeingGoal?
     var streak: Int = 0
-
-    // MARK: - Authorization
-
-    func authorize() async {
-        do {
-            try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
-            authorizationStatus = .approved
-            startMonitoring()
-        } catch {
-            authorizationStatus = .denied
-        }
-    }
-
-    func refreshAuthorizationStatus() {
-        authorizationStatus = AuthorizationCenter.shared.authorizationStatus
-    }
-
-    // MARK: - DeviceActivity Monitoring
-
-    private func startMonitoring() {
-        let center = DeviceActivityCenter()
-        let schedule = DeviceActivitySchedule(
-            intervalStart: DateComponents(hour: 0, minute: 0),
-            intervalEnd: DateComponents(hour: 23, minute: 59),
-            repeats: true
-        )
-        try? center.startMonitoring(.daily, during: schedule)
-    }
-
-    // MARK: - Data Sync
-
-    /// Read today's data written by the DeviceActivity extension into App Groups UserDefaults.
-    func syncFromSharedContainer(context: ModelContext) {
-        let defaults = UserDefaults.wellbeingGroup
-        guard
-            let json = defaults?.string(forKey: UserDefaults.wellbeingTodayKey),
-            let data = json.data(using: .utf8),
-            let report = try? JSONDecoder().decode(WellbeingDayReport.self, from: data)
-        else { return }
-
-        let today = Calendar.current.startOfDay(for: Date())
-        let snapshot = findOrCreateSnapshot(for: today, context: context)
-        snapshot.totalPhoneMinutes = report.totalMinutes
-        snapshot.phonePickups = report.pickups
-        snapshot.source = .deviceActivity
-        if let appsData = try? JSONEncoder().encode(report.apps) {
-            snapshot.appBreakdownJSON = String(data: appsData, encoding: .utf8) ?? "[]"
-        }
-        deriveProductiveTime(for: snapshot, context: context)
-        try? context.save()
-        load(context: context)
-    }
 
     // MARK: - Load
 
     func load(context: ModelContext) {
+        ensureGoal(context: context)
+        populateSampleDataIfNeeded(context: context)
+
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        todaySnapshot = findOrCreateSnapshot(for: today, context: context)
-        deriveProductiveTime(for: todaySnapshot!, context: context)
-        try? context.save()
 
-        // Yesterday
-        if let yesterday = calendar.date(byAdding: .day, value: -1, to: today) {
-            let desc = FetchDescriptor<WellbeingSnapshot>(
-                predicate: #Predicate { $0.date == yesterday }
-            )
-            yesterdaySnapshot = (try? context.fetch(desc))?.first
-        }
-
-        // Last 7 snapshots (not today)
-        var desc7 = FetchDescriptor<WellbeingSnapshot>(
+        let allDesc = FetchDescriptor<WellbeingSnapshot>(
             sortBy: [SortDescriptor(\.date, order: .reverse)]
         )
-        desc7.fetchLimit = 8
-        let all7 = (try? context.fetch(desc7)) ?? []
-        last7 = Array(all7.filter { !calendar.isDateInToday($0.date) }.prefix(7))
+        let all = (try? context.fetch(allDesc)) ?? []
 
-        // Goal
-        let goalDesc = FetchDescriptor<WellbeingGoal>()
-        if let existing = (try? context.fetch(goalDesc))?.first {
-            goal = existing
-        } else {
-            let newGoal = WellbeingGoal()
-            context.insert(newGoal)
-            try? context.save()
-            goal = newGoal
+        todaySnapshot = all.first { calendar.isDateInToday($0.date) }
+            ?? findOrCreate(for: today, context: context)
+
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: today) {
+            yesterdaySnapshot = all.first { calendar.isDate($0.date, inSameDayAs: yesterday) }
         }
 
-        // Streak
-        if let g = goal {
-            streak = currentStreak(snapshots: all7, goal: g)
-        }
+        last7 = Array(all.filter { !calendar.isDateInToday($0.date) }.prefix(7))
+
+        if let g = goal { streak = currentStreak(snapshots: all, goal: g) }
+        try? context.save()
     }
 
-    // MARK: - Flip Metric Calculations
+    // MARK: - Flip Metrics
 
     func isUnderGoal(snapshot: WellbeingSnapshot) -> Bool {
         guard let g = goal else { return true }
@@ -119,31 +48,21 @@ final class WellbeingViewModel {
     }
 
     func pickupsDelta() -> Int? {
-        guard let today = todaySnapshot, let yesterday = yesterdaySnapshot else { return nil }
-        return today.phonePickups - yesterday.phonePickups
+        guard let t = todaySnapshot, let y = yesterdaySnapshot else { return nil }
+        return t.phonePickups - y.phonePickups
     }
 
     func pickupsDeltaLabel() -> String? {
-        guard let delta = pickupsDelta() else { return nil }
-        let abs = Swift.abs(delta)
-        if delta < 0 { return "\(abs) fewer pickups than yesterday" }
-        if delta > 0 { return "\(abs) more pickups than yesterday" }
+        guard let d = pickupsDelta() else { return nil }
+        let a = abs(d)
+        if d < 0 { return "\(a) fewer pickups than yesterday" }
+        if d > 0 { return "\(a) more pickups than yesterday" }
         return "Same pickups as yesterday"
     }
 
     func screenTimeDeltaMinutes() -> Int? {
-        guard let today = todaySnapshot, let yesterday = yesterdaySnapshot else { return nil }
-        return today.totalPhoneMinutes - yesterday.totalPhoneMinutes
-    }
-
-    func screenTimeDeltaLabel() -> String? {
-        guard let delta = screenTimeDeltaMinutes() else { return nil }
-        let abs = Swift.abs(delta)
-        let h = abs / 60, m = abs % 60
-        let formatted = h > 0 ? "\(h)h \(m)m" : "\(m)m"
-        if delta < 0 { return "\(formatted) less screen time than yesterday" }
-        if delta > 0 { return "\(formatted) more screen time than yesterday" }
-        return "Same screen time as yesterday"
+        guard let t = todaySnapshot, let y = yesterdaySnapshot else { return nil }
+        return t.totalPhoneMinutes - y.totalPhoneMinutes
     }
 
     // MARK: - Streak
@@ -162,39 +81,79 @@ final class WellbeingViewModel {
             streak += 1
             expected = cal.date(byAdding: .day, value: -1, to: expected)!
         }
-        // Update longest streak
-        if streak > goal.longestStreak {
-            goal.longestStreak = streak
-        }
+        if streak > goal.longestStreak { goal.longestStreak = streak }
         return streak
     }
 
     // MARK: - Helpers
 
-    private func findOrCreateSnapshot(for date: Date, context: ModelContext) -> WellbeingSnapshot {
-        let desc = FetchDescriptor<WellbeingSnapshot>(
-            predicate: #Predicate { $0.date == date }
-        )
-        if let existing = (try? context.fetch(desc))?.first { return existing }
-        let new = WellbeingSnapshot(date: date)
-        context.insert(new)
-        return new
+    private func findOrCreate(for date: Date, context: ModelContext) -> WellbeingSnapshot {
+        let snap = WellbeingSnapshot(date: date)
+        context.insert(snap)
+        return snap
     }
 
-    private func deriveProductiveTime(for snapshot: WellbeingSnapshot, context: ModelContext) {
+    private func ensureGoal(context: ModelContext) {
+        let desc = FetchDescriptor<WellbeingGoal>()
+        if let existing = (try? context.fetch(desc))?.first {
+            goal = existing
+        } else {
+            let g = WellbeingGoal()
+            context.insert(g)
+            try? context.save()
+            goal = g
+        }
+    }
+
+    // MARK: - Sample Data
+
+    private func populateSampleDataIfNeeded(context: ModelContext) {
+        let desc = FetchDescriptor<WellbeingSnapshot>()
+        let existing = (try? context.fetchCount(desc)) ?? 0
+        guard existing == 0 else { return }
+
         let cal = Calendar.current
-        let start = snapshot.date
-        guard let end = cal.date(byAdding: .day, value: 1, to: start) else { return }
-        let desc = FetchDescriptor<TaskEntry>(
-            predicate: #Predicate { $0.startTime >= start && $0.startTime < end && $0.endTime != nil }
-        )
-        let tasks = (try? context.fetch(desc)) ?? []
-        snapshot.productiveMinutes = Int(tasks.compactMap { $0.actualDuration }.reduce(0, +) / 60)
-        snapshot.tasksCompleted = tasks.count
-    }
-}
+        let today = cal.startOfDay(for: Date())
 
-// MARK: - DeviceActivity.Name extension
-extension DeviceActivityName {
-    static let daily = DeviceActivityName("daily")
+        // Build 7 days of sample data (oldest first)
+        let sampleDays: [(daysAgo: Int, screenMins: Int, pickups: Int, productive: Int, tasks: Int)] = [
+            (7, 195, 68, 42, 3),   // over goal
+            (6, 88,  31, 95, 6),   // under
+            (5, 142, 55, 78, 5),   // over
+            (4, 74,  27, 110, 7),  // under
+            (3, 61,  22, 130, 8),  // under (streak starts)
+            (2, 55,  19, 145, 9),  // under
+            (1, 48,  16, 160, 10), // under (yesterday)
+        ]
+
+        for day in sampleDays {
+            guard let date = cal.date(byAdding: .day, value: -day.daysAgo, to: today) else { continue }
+            let snap = WellbeingSnapshot(date: date)
+            snap.totalPhoneMinutes = day.screenMins
+            snap.phonePickups = day.pickups
+            snap.productiveMinutes = day.productive
+            snap.tasksCompleted = day.tasks
+            snap.source = .deviceActivity
+            context.insert(snap)
+        }
+
+        // Today — under goal, nice green state
+        let todaySnap = WellbeingSnapshot(date: today)
+        todaySnap.totalPhoneMinutes = 52
+        todaySnap.phonePickups = 14
+        todaySnap.productiveMinutes = 178
+        todaySnap.tasksCompleted = 11
+        todaySnap.source = .deviceActivity
+        todaySnap.appBreakdownJSON = """
+        [
+            {"bundleId":"com.burbn.instagram","name":"Instagram","minutes":18},
+            {"bundleId":"com.zhiliaoapp.musically","name":"TikTok","minutes":12},
+            {"bundleId":"com.apple.mobilesafari","name":"Safari","minutes":10},
+            {"bundleId":"com.apple.MobileSMS","name":"Messages","minutes":7},
+            {"bundleId":"com.google.ios.youtube","name":"YouTube","minutes":5}
+        ]
+        """
+        context.insert(todaySnap)
+        try? context.save()
+    }
 }

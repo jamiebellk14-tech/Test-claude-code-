@@ -73,7 +73,12 @@ struct TactileButtonStyle: ButtonStyle {
             .foregroundStyle(.white)
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity)
-            .background(color, in: RoundedRectangle(cornerRadius: cornerRadius))
+            .background {
+                ZStack {
+                    RoundedRectangle(cornerRadius: cornerRadius).fill(color)
+                    RoundedRectangle(cornerRadius: cornerRadius).strokeBorder(Color.white.opacity(0.25), lineWidth: 1)
+                }
+            }
             .compositingGroup()
             .shadow(color: color.darkened(), radius: 0, x: 0, y: pressed ? 0 : ledge)
             .offset(y: pressed ? ledge : 0)
@@ -124,7 +129,12 @@ struct TactileSendButtonStyle: ButtonStyle {
             .font(.system(size: 17, weight: .bold))
             .foregroundStyle(.white)
             .frame(width: 44, height: 44)
-            .background(color, in: Circle())
+            .background {
+                ZStack {
+                    Circle().fill(color)
+                    Circle().strokeBorder(Color.white.opacity(0.25), lineWidth: 1)
+                }
+            }
             .compositingGroup()
             .shadow(color: color.darkened(), radius: 0, x: 0, y: pressed ? 0 : ledge)
             .offset(y: pressed ? ledge : 0)
@@ -288,9 +298,11 @@ struct TactileTabBar: View {
         .padding(.vertical, 8)
         // Hard ledge on the shape only — same tactile style as Begin Task button
         .background {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(tabGreen)
-                .shadow(color: tabGreen.darkened(by: 0.55), radius: 0, x: 0, y: 6)
+            ZStack {
+                RoundedRectangle(cornerRadius: 20).fill(tabGreen)
+                RoundedRectangle(cornerRadius: 20).strokeBorder(Color.white.opacity(0.25), lineWidth: 1)
+            }
+            .shadow(color: tabGreen.darkened(by: 0.55), radius: 0, x: 0, y: 6)
         }
         .padding(.bottom, 6)   // clear space for the ledge shadow to show
         .padding(.horizontal, 20)
@@ -318,16 +330,20 @@ struct TactileTabItem: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 7)
             // Hard ledge on the background shape — collapses when pressed in (selected)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(isSelected ? Color.white.opacity(0.22) : Color.white.opacity(0.07))
-                    .shadow(
-                        color: tabGreen.darkened(by: 0.55),
-                        radius: 0,
-                        x: 0,
-                        y: isSelected ? 0 : ledge   // collapses when selected/pressed
-                    )
-            )
+            .background {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(isSelected ? Color.white.opacity(0.22) : Color.white.opacity(0.07))
+                    RoundedRectangle(cornerRadius: 14)
+                        .strokeBorder(Color.white.opacity(0.25), lineWidth: 1)
+                }
+                .shadow(
+                    color: tabGreen.darkened(by: 0.55),
+                    radius: 0,
+                    x: 0,
+                    y: isSelected ? 0 : ledge
+                )
+            }
             .offset(y: isSelected ? ledge : 0)      // face sinks down to meet the ledge
             .padding(.bottom, ledge)                 // reserve space so ledge shadow is visible
         }

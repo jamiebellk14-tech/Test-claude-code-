@@ -209,32 +209,37 @@ struct TactileNavButton: View {
     let icon: String
     let action: () -> Void
 
+    // ── Nav button shadow (edit independently) ────────────────────────────────
+    var shadowColor: Color    = Color(hex: "#00bf63").darkened(by: 0.45)
+    var shadowRadius: CGFloat = 4        // blur radius
+    var shadowX: CGFloat      = 0
+    var shadowY: CGFloat      = 3        // distance below button
+
+    private let ledge: CGFloat = 2
+
     var body: some View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Color(hex: "#00bf63"))
                 .frame(width: 36, height: 36)
-                .background(Color(hex: "#00bf63").opacity(0.12), in: Circle())
+                .background(
+                    Circle()
+                        .fill(Color(hex: "#00bf63").opacity(0.12))
+                        // Shadow on the background circle only — avoids clipping issues
+                        .shadow(color: shadowColor, radius: shadowRadius, x: shadowX, y: shadowY)
+                )
         }
-        .buttonStyle(_NavLedgeStyle())
+        .buttonStyle(_NavLedgeStyle(ledge: ledge))
     }
 }
 
 private struct _NavLedgeStyle: ButtonStyle {
-    private let ledge: CGFloat = 1
-
-    // ── Nav button shadow (edit independently) ────────────────────────────────
-    private var shadowColor: Color   { Color(hex: "#00bf63").darkened(by: 0.45) }
-    private var shadowRadius: CGFloat { 0 }
-    private var shadowX: CGFloat     { 0 }
-    private var shadowY: CGFloat     { 10 }   // set to 0 to remove shadow
+    let ledge: CGFloat
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
         return configuration.label
-            .compositingGroup()
-            .shadow(color: shadowColor, radius: shadowRadius, x: shadowX, y: pressed ? 0 : shadowY)
             .offset(y: pressed ? ledge : 0)
             .padding(.bottom, ledge)
             .animation(.spring(response: 0.18, dampingFraction: 0.7), value: pressed)

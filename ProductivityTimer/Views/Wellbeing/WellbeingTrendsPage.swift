@@ -106,7 +106,7 @@ private struct PhoneFreeBarChart: View {
                                     .font(.system(size: 11, weight: .semibold))
                                     .foregroundStyle(.secondary)
 
-                                Text(snap.phoneFreeFormatted)
+                                Text(barLabel(snap))
                                     .font(.system(size: 10, weight: .medium, design: .monospaced))
                                     .foregroundStyle(underGoal ? green : orange)
                                     .lineLimit(1)
@@ -146,6 +146,14 @@ private struct PhoneFreeBarChart: View {
         let f = DateFormatter()
         f.dateFormat = "EEE"
         return f.string(from: date).uppercased()
+    }
+
+    // Short label that always fits within a narrow bar column
+    private func barLabel(_ snap: WellbeingSnapshot) -> String {
+        let h = snap.phoneFreeMinutes / 60
+        let m = snap.phoneFreeMinutes % 60
+        if h > 0 { return "\(h)h" }
+        return "\(m)m"
     }
 }
 

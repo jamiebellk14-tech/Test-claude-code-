@@ -72,11 +72,17 @@ struct ProductivityAIView: View {
                 showAPIKeySheet = true
             }
         } label: {
-            Image(systemName: "ellipsis.circle")
-                .font(.system(size: 17))
-                .foregroundStyle(Color(hex: "#00bf63"))
+            Image(systemName: "ellipsis")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(brandGreen)
                 .frame(width: 36, height: 36)
-                .background(Color(hex: "#00bf63").opacity(0.12), in: Circle())
+                .background {
+                    ZStack {
+                        Circle().fill(brandGreen.opacity(0.12))
+                        Circle().strokeBorder(brandGreen.opacity(0.25), lineWidth: 1)
+                    }
+                    .shadow(color: brandGreen.darkened(by: 0.55), radius: 5, x: 0, y: 5)
+                }
         }
     }
 
@@ -163,20 +169,19 @@ struct ProductivityAIView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 ForEach(suggestions, id: \.self) { suggestion in
                     Button {
-                        HapticManager.light()
+                        HapticManager.medium()
                         inputText = suggestion
                         send()
                     } label: {
                         Text(suggestion)
-                            .font(.subheadline)
+                            .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(brandGreen)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(brandGreen.opacity(0.1), in: Capsule())
+                            .frame(maxWidth: .infinity)
                     }
+                    .buttonStyle(TactileSuggestionChipStyle())
                 }
             }
             .padding(.top, 4)
@@ -622,5 +627,36 @@ struct LiveDataCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 6)
+    }
+}
+
+// MARK: - Tactile Suggestion Chip Style
+// Full-width, capsule-shaped, 3D hard-ledge — matches BrandKit tactile buttons
+// but uses green outline/tint rather than solid fill (secondary action weight).
+
+private struct TactileSuggestionChipStyle: ButtonStyle {
+    private let ledge: CGFloat = 3
+
+    func makeBody(configuration: Configuration) -> some View {
+        let pressed = configuration.isPressed
+        return configuration.label
+            .padding(.horizontal, 20)
+            .padding(.vertical, 13)      // meets HIG 44pt minimum touch target
+            .background {
+                ZStack {
+                    Capsule().fill(brandGreen.opacity(pressed ? 0.18 : 0.12))
+                    Capsule().strokeBorder(brandGreen.opacity(0.35), lineWidth: 1.5)
+                    // Top gloss
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.08), Color.clear],
+                        startPoint: .top, endPoint: .center
+                    ).clipShape(Capsule())
+                }
+            }
+            .compositingGroup()
+            .shadow(color: brandGreen.darkened(by: 0.5), radius: 0, x: 0, y: pressed ? 0 : ledge)
+            .offset(y: pressed ? ledge : 0)
+            .padding(.bottom, ledge)
+            .animation(.easeOut(duration: 0.1), value: pressed)
     }
 }

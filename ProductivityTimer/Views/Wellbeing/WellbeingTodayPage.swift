@@ -379,8 +379,18 @@ private struct AppBreakdownCard: View {
     }
 
     private func isSocialMedia(_ bundleId: String) -> Bool {
-        let social = ["com.facebook", "com.instagram", "com.burbn", "com.tiktok",
-                      "com.twitter", "com.snapchat", "com.reddit", "com.pinterest"]
-        return social.contains { bundleId.lowercased().hasPrefix($0) }
+        let social = [
+            "com.facebook", "com.instagram", "com.burbn",
+            "com.zhiliaoapp",          // TikTok
+            "com.tiktok",
+            "com.twitter", "com.atebits.Tweetie2", // Twitter / X
+            "com.snapchat",
+            "com.reddit",
+            "com.pinterest",
+            "com.google.ios.youtube",  // YouTube
+            "com.linkedin",
+            "com.bereal"
+        ]
+        return social.contains { bundleId.lowercased().hasPrefix($0.lowercased()) }
     }
 }

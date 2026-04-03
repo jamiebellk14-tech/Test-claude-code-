@@ -38,6 +38,12 @@ private struct HeroFlipCard: View {
     private var underGoal: Bool { vm.isUnderGoal(snapshot: snapshot) }
     private var faceColor: Color { underGoal ? green : orange }
 
+    // Progress: fraction of 16-hour waking day that was phone-free
+    private var phoneFreeRatio: Double {
+        let wakingMinutes = 16 * 60
+        return min(1.0, Double(snapshot.phoneFreeMinutes) / Double(wakingMinutes))
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Label row
@@ -55,11 +61,28 @@ private struct HeroFlipCard: View {
             .padding(.horizontal, 20)
             .padding(.top, 20)
 
-            // Main number
-            Text(snapshot.phoneFreeFormatted)
-                .font(.system(size: 56, weight: .heavy, design: .rounded))
-                .foregroundStyle(.white)
-                .padding(.top, 8)
+            // Progress arc + main number
+            ZStack {
+                // Track arc
+                Circle()
+                    .trim(from: 0, to: 1)
+                    .stroke(Color.white.opacity(0.15), style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 120, height: 120)
+
+                // Fill arc
+                Circle()
+                    .trim(from: 0, to: phoneFreeRatio)
+                    .stroke(Color.white.opacity(0.85), style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 120, height: 120)
+                    .animation(.spring(response: 0.6, dampingFraction: 0.8), value: phoneFreeRatio)
+
+                Text(snapshot.phoneFreeFormatted)
+                    .font(.system(size: 52, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.white)
+            }
+            .padding(.vertical, 12)
 
             // Goal status
             HStack(spacing: 6) {
@@ -70,14 +93,14 @@ private struct HeroFlipCard: View {
                 } else {
                     Image(systemName: "exclamationmark.circle.fill")
                         .foregroundStyle(Color.white.opacity(0.9))
-                    let over = (snapshot.totalPhoneMinutes - (vm.goal?.dailyPhoneMinutesTarget ?? 120))
+                    let over = max(0, snapshot.totalPhoneMinutes - (vm.goal?.dailyPhoneMinutesTarget ?? 120))
                     Text("\(over)m over goal · \(snapshot.screenTimeFormatted) screen time")
                 }
             }
             .font(.system(size: 13, weight: .medium))
             .foregroundStyle(Color.white.opacity(0.8))
-            .padding(.top, 4)
-            .padding(.bottom, 20)
+            .padding(.top, 2)
+            .padding(.bottom, 18)
         }
         .frame(maxWidth: .infinity)
         .background {
@@ -105,41 +128,45 @@ private struct PickupsComparisonCard: View {
     var vm: WellbeingViewModel
 
     var body: some View {
-        HStack(spacing: 12) {
-            MetricCell(
-                label: "Pickups today",
-                value: "\(snapshot.phonePickups)",
-                unit: "times",
-                color: pickupColor(snapshot.phonePickups, goal: vm.goal?.dailyPickupsTarget ?? 40)
-            )
-            Divider().frame(height: 60)
-            MetricCell(
-                label: "Screen time",
-                value: snapshot.screenTimeFormatted,
-                unit: "",
-                color: vm.isUnderGoal(snapshot: snapshot) ? green : orange
-            )
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                MetricCell(
+                    label: "Pickups today",
+                    value: "\(snapshot.phonePickups)",
+                    unit: "times",
+                    color: pickupColor(snapshot.phonePickups, goal: vm.goal?.dailyPickupsTarget ?? 40)
+                )
+                Divider().frame(height: 60)
+                MetricCell(
+                    label: "Screen time",
+                    value: snapshot.screenTimeFormatted,
+                    unit: "",
+                    color: vm.isUnderGoal(snapshot: snapshot) ? green : orange
+                )
+            }
+            .padding(16)
+
+            // Delta row — inside the card
+            if let deltaLabel = vm.pickupsDeltaLabel() {
+                let delta = vm.pickupsDelta() ?? 0
+                Divider().padding(.horizontal, 16)
+                HStack(spacing: 6) {
+                    Image(systemName: delta <= 0 ? "arrow.down.circle.fill" : "arrow.up.circle.fill")
+                        .foregroundStyle(delta <= 0 ? green : orange)
+                    Text(deltaLabel)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(delta <= 0 ? green : orange)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+            }
         }
-        .padding(16)
         .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .strokeBorder(Color(.separator).opacity(0.4), lineWidth: 1)
         )
-
-        // Delta row
-        if let deltaLabel = vm.pickupsDeltaLabel() {
-            let delta = vm.pickupsDelta() ?? 0
-            HStack(spacing: 6) {
-                Image(systemName: delta <= 0 ? "arrow.down.circle.fill" : "arrow.up.circle.fill")
-                    .foregroundStyle(delta <= 0 ? green : orange)
-                Text(deltaLabel)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(delta <= 0 ? green : orange)
-                Spacer()
-            }
-            .padding(.horizontal, 4)
-        }
     }
 
     private func pickupColor(_ count: Int, goal: Int) -> Color {
@@ -281,9 +308,11 @@ private struct AICoachCard: View {
 private struct AppBreakdownCard: View {
     let apps: [AppUsageEntry]
     private let ledge: CGFloat = 3
+    private let barHeight: CGFloat = 14
 
     private var topApps: [AppUsageEntry] { Array(apps.prefix(5)) }
     private var maxMinutes: Int { topApps.map(\.minutes).max() ?? 1 }
+    private var totalMinutes: Int { topApps.map(\.minutes).reduce(0, +) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -293,6 +322,7 @@ private struct AppBreakdownCard: View {
 
             ForEach(topApps) { app in
                 let ratio = Double(app.minutes) / Double(maxMinutes)
+                let pct = totalMinutes > 0 ? Int(round(Double(app.minutes) / Double(totalMinutes) * 100)) : 0
                 let isSocial = isSocialMedia(app.bundleId)
                 let barColor: Color = isSocial ? orange : green
 
@@ -301,6 +331,9 @@ private struct AppBreakdownCard: View {
                         Text(app.name)
                             .font(.system(size: 13, weight: .medium))
                         Spacer()
+                        Text("\(pct)%")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.secondary)
                         Text(formatMinutes(app.minutes))
                             .font(.system(size: 12, weight: .semibold, design: .monospaced))
                             .foregroundStyle(barColor)
@@ -311,11 +344,11 @@ private struct AppBreakdownCard: View {
                             // Track
                             RoundedRectangle(cornerRadius: 5)
                                 .fill(Color(.tertiarySystemBackground))
-                                .frame(height: 10)
+                                .frame(height: barHeight)
                             // Ledge
                             RoundedRectangle(cornerRadius: 5)
                                 .fill(barColor.darkened(by: 0.45))
-                                .frame(width: max(10, geo.size.width * ratio), height: 10)
+                                .frame(width: max(barHeight, geo.size.width * ratio), height: barHeight)
                                 .offset(y: ledge)
                             // Face
                             ZStack {
@@ -324,10 +357,10 @@ private struct AppBreakdownCard: View {
                                 RoundedRectangle(cornerRadius: 5)
                                     .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
                             }
-                            .frame(width: max(10, geo.size.width * ratio), height: 10)
+                            .frame(width: max(barHeight, geo.size.width * ratio), height: barHeight)
                         }
                     }
-                    .frame(height: 10 + ledge)
+                    .frame(height: barHeight + ledge)
                 }
             }
         }

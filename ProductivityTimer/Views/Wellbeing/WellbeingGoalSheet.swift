@@ -14,87 +14,129 @@ struct WellbeingGoalSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    VStack(alignment: .leading, spacing: 12) {
+            ScrollView {
+                VStack(spacing: 16) {
+
+                    // Screen Time Goal Card
+                    VStack(alignment: .leading, spacing: 16) {
                         Text("Daily screen time limit")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(.secondary)
 
-                        HStack(spacing: 16) {
-                            VStack(spacing: 4) {
-                                Text("\(hoursTarget)")
-                                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                                    .foregroundStyle(green)
-                                Text("hours")
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(.secondary)
+                        // HH : MM display
+                        HStack(spacing: 0) {
+                            // Hours
+                            VStack(spacing: 6) {
+                                HStack(spacing: 12) {
+                                    stepButton(icon: "minus", action: { hoursTarget = max(0, hoursTarget - 1) })
+                                    VStack(spacing: 2) {
+                                        Text("\(hoursTarget)")
+                                            .font(.system(size: 40, weight: .bold, design: .rounded))
+                                            .foregroundStyle(green)
+                                            .frame(minWidth: 48)
+                                        Text("hours")
+                                            .font(.system(size: 12, weight: .medium))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    stepButton(icon: "plus", action: { hoursTarget = min(16, hoursTarget + 1) })
+                                }
                             }
                             .frame(maxWidth: .infinity)
 
                             Text(":")
-                                .font(.system(size: 28, weight: .bold))
-                                .foregroundStyle(.secondary)
+                                .font(.system(size: 36, weight: .bold))
+                                .foregroundStyle(Color(.tertiaryLabel))
+                                .padding(.bottom, 18)
 
-                            VStack(spacing: 4) {
-                                Text("\(minutesTarget < 10 ? "0" : "")\(minutesTarget)")
-                                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                                    .foregroundStyle(green)
-                                Text("minutes")
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(.secondary)
+                            // Minutes
+                            VStack(spacing: 6) {
+                                HStack(spacing: 12) {
+                                    stepButton(icon: "minus", action: { minutesTarget = max(0, minutesTarget - 5) })
+                                    VStack(spacing: 2) {
+                                        Text(minutesTarget < 10 ? "0\(minutesTarget)" : "\(minutesTarget)")
+                                            .font(.system(size: 40, weight: .bold, design: .rounded))
+                                            .foregroundStyle(green)
+                                            .frame(minWidth: 48)
+                                        Text("minutes")
+                                            .font(.system(size: 12, weight: .medium))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    stepButton(icon: "plus", action: { minutesTarget = min(55, minutesTarget + 5) })
+                                }
                             }
                             .frame(maxWidth: .infinity)
                         }
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 4)
 
-                        Stepper("Hours: \(hoursTarget)", value: $hoursTarget, in: 0...16)
-                            .labelsHidden()
-                        Stepper("Minutes: \(minutesTarget)", value: $minutesTarget, in: 0...55, step: 5)
-                            .labelsHidden()
+                        Text("Recommended: 2h or less per day")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
                     }
-                    .padding(.vertical, 4)
-                } header: {
-                    Text("Screen Time Goal")
-                }
+                    .padding(16)
+                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
+                    .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 1))
 
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
+                    // Pickups Goal Card
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Daily pickups limit")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.secondary)
+
                         HStack {
-                            Text("Target")
-                                .foregroundStyle(.secondary)
+                            stepButton(icon: "minus", action: { pickupsTarget = max(5, pickupsTarget - 5) })
                             Spacer()
-                            Text("\(pickupsTarget) pickups")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(green)
+                            VStack(spacing: 2) {
+                                Text("\(pickupsTarget)")
+                                    .font(.system(size: 40, weight: .bold, design: .rounded))
+                                    .foregroundStyle(green)
+                                Text("pickups / day")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            stepButton(icon: "plus", action: { pickupsTarget = min(200, pickupsTarget + 5) })
                         }
-                        Stepper("", value: $pickupsTarget, in: 5...200, step: 5)
-                            .labelsHidden()
-                    }
-                } header: {
-                    Text("Daily Pickups Goal")
-                } footer: {
-                    Text("Average is around 80–100 pickups per day. Start with a realistic goal and reduce over time.")
-                }
+                        .padding(.vertical, 4)
 
-                if vm.streak > 0 {
-                    Section {
+                        Text("Average is 80–100 pickups/day. Start realistic and reduce over time.")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(16)
+                    .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
+                    .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 1))
+
+                    // Streak warning (if active)
+                    if vm.streak > 0 {
                         HStack(spacing: 10) {
                             Image(systemName: "flame.fill")
-                                .foregroundStyle(green)
+                                .font(.system(size: 18))
+                                .foregroundStyle(.white)
                             Text("You have a \(vm.streak)-day streak — lowering your goal won't reset it.")
-                                .font(.system(size: 13))
-                                .foregroundStyle(.secondary)
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(Color.white.opacity(0.9))
+                            Spacer()
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                        .background {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 14).fill(green)
+                                RoundedRectangle(cornerRadius: 14).strokeBorder(Color.white.opacity(0.25), lineWidth: 1)
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.10), Color.clear],
+                                    startPoint: .top, endPoint: .center
+                                ).clipShape(RoundedRectangle(cornerRadius: 14))
+                            }
                         }
                     }
-                }
 
-                Section {
+                    // Save button
                     Button("Save Goal") { save() }
                         .buttonStyle(TactileButtonStyle())
-                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                        .listRowBackground(Color.clear)
+                        .padding(.top, 4)
                 }
+                .padding(16)
             }
             .navigationTitle("Wellbeing Goal")
             .navigationBarTitleDisplayMode(.inline)
@@ -106,6 +148,23 @@ struct WellbeingGoalSheet: View {
             }
             .onAppear { loadCurrent() }
         }
+    }
+
+    @ViewBuilder
+    private func stepButton(icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(green)
+                .frame(width: 36, height: 36)
+                .background {
+                    ZStack {
+                        Circle().fill(green.opacity(0.12))
+                        Circle().strokeBorder(green.opacity(0.25), lineWidth: 1)
+                    }
+                }
+        }
+        .buttonStyle(.plain)
     }
 
     private func loadCurrent() {

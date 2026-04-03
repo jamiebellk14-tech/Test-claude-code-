@@ -51,10 +51,16 @@ private struct PhoneFreeBarChart: View {
     let goal: WellbeingGoal?
     private let ledge: CGFloat = 4
     private let barCornerRadius: CGFloat = 6
+    private let chartHeight: CGFloat = 100
 
-    // Show last 7 days oldest→newest
     private var sorted: [WellbeingSnapshot] { snapshots.sorted { $0.date < $1.date } }
-    private var maxMinutes: Int { max(sorted.map(\.phoneFreeMinutes).max() ?? 1, 1) }
+
+    // Goal line: fraction of chart height at which the goal sits
+    private var goalLineRatio: Double? {
+        guard let g = goal else { return nil }
+        let goalPhoneFreeMinutes = max(0, (16 * 60) - g.dailyPhoneMinutesTarget)
+        return min(1.0, Double(goalPhoneFreeMinutes) / Double(16 * 60))
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -62,54 +68,71 @@ private struct PhoneFreeBarChart: View {
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(.secondary)
 
-            HStack(alignment: .bottom, spacing: 8) {
-                ForEach(sorted) { snap in
-                    let ratio = Double(snap.phoneFreeMinutes) / Double(16 * 60)
-                    let underGoal = (goal.map { snap.totalPhoneMinutes <= $0.dailyPhoneMinutesTarget } ?? true)
-                    let barColor: Color = underGoal ? green : orange
+            GeometryReader { outer in
+                ZStack(alignment: .bottomLeading) {
+                    // Bars row
+                    HStack(alignment: .bottom, spacing: 8) {
+                        ForEach(sorted) { snap in
+                            let ratio = min(1.0, Double(snap.phoneFreeMinutes) / Double(16 * 60))
+                            let underGoal = (goal.map { snap.totalPhoneMinutes <= $0.dailyPhoneMinutesTarget } ?? true)
+                            let barColor: Color = underGoal ? green : orange
 
-                    VStack(spacing: 5) {
-                        // Bar
-                        GeometryReader { geo in
-                            let barH = max(8, geo.size.height * ratio)
-                            ZStack(alignment: .bottom) {
-                                // Ledge
-                                RoundedRectangle(cornerRadius: barCornerRadius)
-                                    .fill(barColor.darkened(by: 0.5))
-                                    .frame(height: barH + ledge)
-                                // Face
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: barCornerRadius)
-                                        .fill(barColor)
-                                    RoundedRectangle(cornerRadius: barCornerRadius)
-                                        .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
-                                    // Gloss
-                                    LinearGradient(
-                                        colors: [Color.white.opacity(0.15), Color.clear],
-                                        startPoint: .top, endPoint: .center
-                                    )
-                                    .clipShape(RoundedRectangle(cornerRadius: barCornerRadius))
+                            VStack(spacing: 5) {
+                                GeometryReader { geo in
+                                    let barH = max(8, geo.size.height * ratio)
+                                    ZStack(alignment: .bottom) {
+                                        // Ledge
+                                        RoundedRectangle(cornerRadius: barCornerRadius)
+                                            .fill(barColor.darkened(by: 0.5))
+                                            .frame(height: barH + ledge)
+                                        // Face
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: barCornerRadius)
+                                                .fill(barColor)
+                                            RoundedRectangle(cornerRadius: barCornerRadius)
+                                                .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
+                                            LinearGradient(
+                                                colors: [Color.white.opacity(0.15), Color.clear],
+                                                startPoint: .top, endPoint: .center
+                                            )
+                                            .clipShape(RoundedRectangle(cornerRadius: barCornerRadius))
+                                        }
+                                        .frame(height: barH)
+                                    }
                                 }
-                                .frame(height: barH)
+                                .frame(height: chartHeight)
+
+                                Text(dayAbbr(snap.date))
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(.secondary)
+
+                                Text(snap.phoneFreeFormatted)
+                                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                                    .foregroundStyle(underGoal ? green : orange)
+                                    .lineLimit(1)
                             }
+                            .frame(maxWidth: .infinity)
                         }
-                        .frame(height: 100)
-
-                        // Day label
-                        Text(dayAbbr(snap.date))
-                            .font(.system(size: 9, weight: .semibold))
-                            .foregroundStyle(.secondary)
-
-                        // Value
-                        Text(snap.phoneFreeFormatted)
-                            .font(.system(size: 8, weight: .medium, design: .monospaced))
-                            .foregroundStyle(barColor)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.5)
                     }
-                    .frame(maxWidth: .infinity)
+
+                    // Dashed goal line overlay
+                    if let ratio = goalLineRatio {
+                        // The line sits `ratio` fraction from the bottom of the chart area
+                        // Chart area ends at chartHeight from bottom of GeometryReader
+                        let labelsHeight: CGFloat = 30 // day abbr + value label below bars
+                        let lineY = outer.size.height - labelsHeight - (chartHeight * ratio)
+                        Path { path in
+                            path.move(to: CGPoint(x: 0, y: lineY))
+                            path.addLine(to: CGPoint(x: outer.size.width, y: lineY))
+                        }
+                        .stroke(
+                            Color(.secondaryLabel).opacity(0.45),
+                            style: StrokeStyle(lineWidth: 1, dash: [4, 4])
+                        )
+                    }
                 }
             }
+            .frame(height: chartHeight + 40)
         }
         .padding(16)
         .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
@@ -132,6 +155,7 @@ private struct PickupsTrendCard: View {
     let snapshots: [WellbeingSnapshot]
     let goal: WellbeingGoal?
     private let ledge: CGFloat = 3
+    private let barHeight: CGFloat = 10
 
     private var sorted: [WellbeingSnapshot] { snapshots.sorted { $0.date < $1.date } }
     private var maxPickups: Int { max(sorted.map(\.phonePickups).max() ?? 1, 1) }
@@ -173,22 +197,22 @@ private struct PickupsTrendCard: View {
                         ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 5)
                                 .fill(Color(.tertiarySystemBackground))
-                                .frame(height: 8)
+                                .frame(height: barHeight)
                             ZStack(alignment: .leading) {
                                 RoundedRectangle(cornerRadius: 5)
                                     .fill(barColor.darkened(by: 0.45))
-                                    .frame(width: max(8, geo.size.width * ratio), height: 8)
+                                    .frame(width: max(barHeight, geo.size.width * ratio), height: barHeight)
                                     .offset(y: ledge)
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 5).fill(barColor)
                                     RoundedRectangle(cornerRadius: 5)
                                         .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
                                 }
-                                .frame(width: max(8, geo.size.width * ratio), height: 8)
+                                .frame(width: max(barHeight, geo.size.width * ratio), height: barHeight)
                             }
                         }
                     }
-                    .frame(height: 8 + ledge)
+                    .frame(height: barHeight + ledge)
                 }
             }
         }
@@ -205,7 +229,7 @@ private struct PickupsTrendCard: View {
         if cal.isDateInToday(date) { return "Today" }
         if cal.isDateInYesterday(date) { return "Yesterday" }
         let f = DateFormatter()
-        f.dateFormat = "EEEE"
+        f.dateFormat = "EEE"
         return f.string(from: date)
     }
 }
@@ -215,6 +239,10 @@ private struct PickupsTrendCard: View {
 private struct ProductiveVsScreenCard: View {
     let snapshots: [WellbeingSnapshot]
     private var sorted: [WellbeingSnapshot] { snapshots.sorted { $0.date < $1.date } }
+
+    private var maxTotal: Int {
+        sorted.map { $0.productiveMinutes + $0.totalPhoneMinutes }.max() ?? 1
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -230,27 +258,38 @@ private struct ProductiveVsScreenCard: View {
             }
 
             ForEach(sorted) { snap in
-                let totalMax = max(snap.productiveMinutes + snap.totalPhoneMinutes, 1)
-                let prodRatio = Double(snap.productiveMinutes) / Double(totalMax)
-                let screenRatio = Double(snap.totalPhoneMinutes) / Double(totalMax)
+                let prodRatio = Double(snap.productiveMinutes) / Double(maxTotal)
+                let screenRatio = Double(snap.totalPhoneMinutes) / Double(maxTotal)
 
-                VStack(spacing: 3) {
-                    HStack {
-                        Text(dayShort(snap.date))
-                            .font(.system(size: 12, weight: .medium))
-                            .frame(width: 28, alignment: .leading)
-                        GeometryReader { geo in
-                            HStack(spacing: 2) {
-                                if snap.productiveMinutes > 0 {
-                                    segmentBar(green, width: geo.size.width * prodRatio * 0.48)
-                                }
-                                if snap.totalPhoneMinutes > 0 {
-                                    segmentBar(orange, width: geo.size.width * screenRatio * 0.48)
-                                }
-                                Spacer()
+                HStack(spacing: 6) {
+                    Text(dayShort(snap.date))
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, alignment: .leading)
+
+                    GeometryReader { geo in
+                        HStack(spacing: 3) {
+                            if snap.productiveMinutes > 0 {
+                                segmentBar(green, width: geo.size.width * prodRatio)
                             }
+                            if snap.totalPhoneMinutes > 0 {
+                                segmentBar(orange, width: geo.size.width * screenRatio)
+                            }
+                            Spacer(minLength: 0)
                         }
-                        .frame(height: 12)
+                    }
+                    .frame(height: 14)
+
+                    HStack(spacing: 3) {
+                        Text("\(snap.productiveMinutes)m")
+                            .font(.system(size: 10, weight: .medium, design: .monospaced))
+                            .foregroundStyle(green)
+                        Text("/")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.tertiary)
+                        Text("\(snap.totalPhoneMinutes)m")
+                            .font(.system(size: 10, weight: .medium, design: .monospaced))
+                            .foregroundStyle(orange)
                     }
                 }
             }
@@ -270,7 +309,7 @@ private struct ProductiveVsScreenCard: View {
             RoundedRectangle(cornerRadius: 4)
                 .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
         }
-        .frame(width: max(4, width), height: 12)
+        .frame(width: max(4, width), height: 14)
     }
 
     private func legendDot(_ color: Color, _ label: String) -> some View {

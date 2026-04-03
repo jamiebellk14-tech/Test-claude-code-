@@ -241,12 +241,12 @@ private struct AICoachCard: View {
                         .font(.system(size: 14))
                         .foregroundStyle(.secondary)
                 }
-            } else if let error = summaryService.errorMessage {
-                Text(error)
+            } else if !summaryService.errorMessage.isEmpty {
+                Text(summaryService.errorMessage)
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
-            } else if let text = summaryService.summary, !text.isEmpty {
-                Text(text)
+            } else if !summaryService.summary.isEmpty {
+                Text(summaryService.summary)
                     .font(.system(size: 14, weight: .regular))
                     .foregroundStyle(.primary)
                     .fixedSize(horizontal: false, vertical: true)

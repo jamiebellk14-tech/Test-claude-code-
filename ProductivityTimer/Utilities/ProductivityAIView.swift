@@ -177,9 +177,6 @@ struct ProductivityAIView: View {
                         send()
                     } label: {
                         Text(suggestion)
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(brandGreen)
-                            .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(TactileSuggestionChipStyle())
                 }
@@ -631,24 +628,26 @@ struct LiveDataCard: View {
 }
 
 // MARK: - Tactile Suggestion Chip Style
-// Full-width, capsule-shaped, 3D hard-ledge — matches BrandKit tactile buttons
-// but uses green outline/tint rather than solid fill (secondary action weight).
+// Solid green fill + white text — identical visual language to TactileButtonStyle
+// but capsule-shaped and slightly lighter padding for suggestion chips.
 
 private struct TactileSuggestionChipStyle: ButtonStyle {
-    private let ledge: CGFloat = 3
+    private let ledge: CGFloat = 4
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
         return configuration.label
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundStyle(.white)
             .padding(.horizontal, 20)
-            .padding(.vertical, 13)      // meets HIG 44pt minimum touch target
+            .padding(.vertical, 12)      // meets HIG 44pt minimum touch target
+            .frame(maxWidth: .infinity)
             .background {
                 ZStack {
-                    Capsule().fill(brandGreen.opacity(pressed ? 0.18 : 0.12))
-                    Capsule().strokeBorder(brandGreen.opacity(0.35), lineWidth: 1.5)
-                    // Top gloss
+                    Capsule().fill(brandGreen)
+                    Capsule().strokeBorder(Color.white.opacity(0.25), lineWidth: 1)
                     LinearGradient(
-                        colors: [Color.white.opacity(0.08), Color.clear],
+                        colors: [Color.white.opacity(0.12), Color.clear],
                         startPoint: .top, endPoint: .center
                     ).clipShape(Capsule())
                 }
